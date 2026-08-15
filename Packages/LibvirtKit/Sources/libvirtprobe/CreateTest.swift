@@ -102,14 +102,26 @@ enum CreateTest {
             throw error
         }
 
-        print("  removing …")
-        try await libvirt.undefine(domain: name)
-        try await libvirt.deleteVolume(named: volumeName, inPool: pool)
+        // Delete with its storage, which is the path the app's delete dialog
+        // takes when "also delete its disks" is ticked. Checking the volume is
+        // gone matters: --remove-all-storage silently ignores disks it cannot
+        // account for, which would leave the image orphaned.
+        print("  deleting with storage …")
+        try await libvirt.undefine(domain: name, removeStorage: true)
 
         let after = try await libvirt.listDomains()
         guard !after.contains(where: { $0.name == name }) else {
             throw TestFailure("domain still defined after undefine")
         }
-        print("  removed ✓\n\n  create works")
+        let remaining = try await libvirt.listVolumes(inPool: pool)
+        if remaining.contains(where: { $0.name == volumeName }) {
+            // Not fatal for the test, but the app must not claim it removed
+            // the disks when it did not.
+            print("  note: volume survived --remove-all-storage; cleaning up")
+            try await libvirt.deleteVolume(named: volumeName, inPool: pool)
+        } else {
+            print("  volume removed with the domain ✓")
+        }
+        print("  removed ✓\n\n  create and delete work")
     }
 }

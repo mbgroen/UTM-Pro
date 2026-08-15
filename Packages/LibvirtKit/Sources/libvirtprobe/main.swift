@@ -135,10 +135,20 @@ do {
         print("  \(pool.name)  \(pool.isActive ? "active" : "inactive")  "
               + "\(format(pool.allocationBytes)) / \(format(pool.capacityBytes))  "
               + "\(pool.targetPath ?? "")")
-        let volumes = try await libvirt.listVolumes(inPool: pool.name)
-        for volume in volumes {
-            print("      \(volume.name)  \(volume.format ?? "?")  "
-                  + "\(format(volume.allocationBytes)) / \(format(volume.capacityBytes))")
+        // An inactive pool cannot serve volumes. Skipping rather than
+        // failing matters: one unusable pool must not hide every other one.
+        guard pool.isActive else {
+            print("      (inactive — start the pool to list its volumes)")
+            continue
+        }
+        do {
+            let volumes = try await libvirt.listVolumes(inPool: pool.name)
+            for volume in volumes {
+                print("      \(volume.name)  \(volume.format ?? "?")  "
+                      + "\(format(volume.allocationBytes)) / \(format(volume.capacityBytes))")
+            }
+        } catch {
+            print("      (could not list volumes: \(error.localizedDescription))")
         }
     }
 

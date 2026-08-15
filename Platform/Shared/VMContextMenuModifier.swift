@@ -23,6 +23,7 @@ struct VMContextMenuModifier: ViewModifier {
     @State private var showSnapshots = false
     #if WITH_REMOTE_KVM
     @State private var showAddDisk = false
+    @State private var showDeleteRemote = false
     #endif
     @State private var confirmAction: ConfirmAction?
     @State private var shareItem: VMShareItemModifier.ShareItem?
@@ -138,10 +139,9 @@ struct VMContextMenuModifier: ViewModifier {
             Button {
                 showAddDisk = true
             } label: {
-                Label("Add Disk…", systemImage: "internaldrive")
+                Label("Disks…", systemImage: "internaldrive")
             }
-            .disabled(libvirtVM.state != .stopped)
-            .help("Create a disk in a storage pool on the host, or attach one that already exists.")
+            .help("Add a disk from a storage pool, or detach one.")
 
             Divider()
 
@@ -157,10 +157,23 @@ struct VMContextMenuModifier: ViewModifier {
             } label: {
                 Label("Refresh", systemImage: "arrow.triangle.2.circlepath")
             }.help("Re-read this VM's state from the host.")
+
+            Divider()
+
+            DestructiveButton {
+                showDeleteRemote = true
+            } label: {
+                Label("Delete…", systemImage: "trash")
+            }.help("Remove this VM from the host.")
         }
         .sheet(isPresented: $showAddDisk) {
             if #available(iOS 16, macOS 13, *), let server = data.libvirtServers.server(for: vm) {
-                VMLibvirtDiskAddView(server: server, vm: libvirtVM)
+                VMLibvirtDiskListView(server: server, vm: libvirtVM)
+            }
+        }
+        .sheet(isPresented: $showDeleteRemote) {
+            if #available(iOS 16, macOS 13, *), let server = data.libvirtServers.server(for: vm) {
+                VMLibvirtDeleteView(server: server, vm: libvirtVM)
             }
         }
         .modifier(VMSnapshotsSheetModifier(vm: vm, isPresented: $showSnapshots))

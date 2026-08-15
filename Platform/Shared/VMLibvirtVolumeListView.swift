@@ -30,6 +30,7 @@ struct VMLibvirtVolumeListView: View {
     @State private var resizing: LibvirtVolume?
     @State private var cloning: LibvirtVolume?
     @State private var deleting: LibvirtVolume?
+    @State private var converting: LibvirtVolume?
 
     var body: some View {
         List {
@@ -53,6 +54,11 @@ struct VMLibvirtVolumeListView: View {
                             cloning = volume
                         } label: {
                             Label("Duplicate…", systemImage: "doc.on.doc")
+                        }
+                        Button {
+                            converting = volume
+                        } label: {
+                            Label("Convert Format…", systemImage: "arrow.triangle.swap")
                         }
                         Divider()
                         Button(role: .destructive) {
@@ -96,6 +102,11 @@ struct VMLibvirtVolumeListView: View {
         }
         .sheet(item: $cloning) { volume in
             VMLibvirtVolumeCloneView(server: server, pool: pool, volume: volume) {
+                await load()
+            }
+        }
+        .sheet(item: $converting) { volume in
+            VMLibvirtVolumeConvertView(server: server, pool: pool, volume: volume) {
                 await load()
             }
         }
@@ -471,6 +482,105 @@ struct VMLibvirtSheet<Content: View>: View {
                     .disabled(!isConfirmEnabled)
                 }
             }
+        }
+    }
+}
+
+
+// MARK: - Convert
+
+/// Converts a volume to another image format.
+///
+/// Writes a new file rather than changing the original in place, because
+/// qemu-img convert cannot do otherwise and because leaving the source intact
+/// means a failed conversion costs nothing.
+@available(iOS 16, macOS 13, *)
+struct VMLibvirtVolumeConvertView: View {
+    @ObservedObject var server: UTMLibvirtServer
+    let pool: LibvirtPool
+    let volume: LibvirtVolume
+    let onFinish: () async -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var format: LibvirtVolumeFormat
+    @State private var newName: String
+    @State private var errorMessage: String?
+    @State private var isWorking = false
+
+    init(server: UTMLibvirtServer, pool: LibvirtPool, volume: LibvirtVolume, onFinish: @escaping () async -> Void) {
+        self.server = server
+        self.pool = pool
+        self.volume = volume
+        self.onFinish = onFinish
+        let target: LibvirtVolumeFormat = volume.format == "qcow2" ? .raw : .qcow2
+        _format = State(initialValue: target)
+        let base = (volume.name as NSString).deletingPathExtension
+        _newName = State(initialValue: "\(base).\(target.rawValue)")
+    }
+
+    private var isUsed: Bool {
+        !server.domainsUsing(volumePath: volume.path).isEmpty
+    }
+
+    var body: some View {
+        VMLibvirtSheet(title: "Convert \(volume.name)",
+                       confirmTitle: "Convert",
+                       isConfirmEnabled: !newName.trimmingCharacters(in: .whitespaces).isEmpty && !isWorking,
+                       errorMessage: errorMessage,
+                       onConfirm: convert) {
+            Picker("To Format", selection: $format) {
+                ForEach(LibvirtVolumeFormat.allCases) { option in
+                    Text(option.displayName).tag(option)
+                }
+            }
+            .onChange(of: format) { newValue in
+                let base = (newName as NSString).deletingPathExtension
+                newName = "\(base).\(newValue.rawValue)"
+            }
+            TextField("New Name", text: $newName)
+                #if !os(macOS)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                #endif
+            Text("Writes a new image and leaves \(volume.name) untouched. The pool needs room for both.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if format == .raw {
+                // Worth stating, because it is the usual reason to regret a
+                // conversion after the fact.
+                Text("Raw images cannot hold snapshots, and any snapshots in the source are not carried over.")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if isUsed {
+                Text("A virtual machine is using the source image. Converting does not switch it over — attach the new image yourself.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func convert() {
+        isWorking = true
+        errorMessage = nil
+        Task {
+            do {
+                let directory = (volume.path as NSString).deletingLastPathComponent
+                let destination = (directory as NSString)
+                    .appendingPathComponent(newName.trimmingCharacters(in: .whitespaces))
+                try await server.convertVolume(at: volume.path,
+                                               toPath: destination,
+                                               format: format,
+                                               inPool: pool.name)
+                await onFinish()
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
         }
     }
 }

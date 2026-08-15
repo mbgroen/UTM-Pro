@@ -42,6 +42,7 @@ struct VMLibvirtServerSheetModifier: ViewModifier {
                 // Reconnect saved servers on launch so the sidebar is
                 // populated without the user having to ask.
                 await data.libvirtServers.connectAll()
+                data.libvirtServers.startPolling()
             }
     }
 }

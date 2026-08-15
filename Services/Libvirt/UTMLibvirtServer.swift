@@ -299,6 +299,17 @@ final class UTMLibvirtServer: ObservableObject, Identifiable {
         try await refreshPools()
     }
 
+    func convertVolume(at sourcePath: String,
+                       toPath destinationPath: String,
+                       format: LibvirtVolumeFormat,
+                       inPool poolName: String) async throws {
+        try await libvirt.convertVolume(at: sourcePath,
+                                        toPath: destinationPath,
+                                        format: format,
+                                        inPool: poolName)
+        try await refreshPools()
+    }
+
     func deleteVolume(named name: String, inPool poolName: String) async throws {
         try await libvirt.deleteVolume(named: name, inPool: poolName)
         try await refreshPools()
@@ -356,6 +367,26 @@ final class UTMLibvirtServer: ObservableObject, Identifiable {
         }
 
         await refresh()
+    }
+
+    /// Removes a domain's definition.
+    ///
+    /// - Parameter removeStorage: also delete the domain's disk images. Off by
+    ///   default, because undefining a VM is reversible if the disks survive
+    ///   and permanent if they do not.
+    func deleteVirtualMachine(_ vm: UTMLibvirtVirtualMachine, removeStorage: Bool) async throws {
+        let host = try libvirt
+        let name = vm.domainName
+
+        // A running domain cannot be undefined, and cutting power without
+        // saying so would look like the delete itself broke something.
+        if vm.state != .stopped {
+            try await host.destroy(domain: name)
+        }
+        await vm.disconnectConsole()
+        try await host.undefine(domain: name, removeStorage: removeStorage)
+        await refresh()
+        try? await refreshPools()
     }
 
     /// Names of domains currently using a given image path.

@@ -25,6 +25,7 @@ struct VMLibvirtStorageView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showCreatePool = false
+    @State private var deletingPool: LibvirtPool?
     @State private var errorMessage: String?
     @State private var isRefreshing = false
 
@@ -82,6 +83,9 @@ struct VMLibvirtStorageView: View {
             .sheet(isPresented: $showCreatePool) {
                 VMLibvirtPoolCreateView(server: server)
             }
+            .sheet(item: $deletingPool) { pool in
+                VMLibvirtPoolDeleteView(server: server, pool: pool)
+            }
             .task {
                 await refresh()
             }
@@ -118,6 +122,13 @@ struct VMLibvirtStorageView: View {
                   systemImage: pool.isAutostart ? "bolt.slash" : "bolt")
         }
         .help("Whether the host brings this pool online at boot.")
+
+        Button(role: .destructive) {
+            deletingPool = pool
+        } label: {
+            Label("Remove Pool…", systemImage: "trash")
+        }
+        .help("Removes the pool definition. The files in it are not deleted.")
     }
 
     private func refresh() async {
@@ -271,6 +282,64 @@ struct VMLibvirtPoolCreateView: View {
                     .disabled(!isValid)
                 }
             }
+        }
+    }
+}
+
+
+/// Removes a pool's definition.
+///
+/// Kept separate from deleting a volume, and worded to make the difference
+/// unmissable: this forgets where storage is, it does not destroy it. People
+/// hesitate over this action far more than the wording warrants, and the ones
+/// who do not hesitate are usually confusing it with deleting the contents.
+@available(iOS 16, macOS 13, *)
+struct VMLibvirtPoolDeleteView: View {
+    @ObservedObject var server: UTMLibvirtServer
+    let pool: LibvirtPool
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var errorMessage: String?
+    @State private var isWorking = false
+
+    var body: some View {
+        VMLibvirtSheet(title: "Remove \(pool.name)",
+                       confirmTitle: "Remove",
+                       isDestructive: true,
+                       isConfirmEnabled: !isWorking,
+                       errorMessage: errorMessage,
+                       onConfirm: remove) {
+            Text("Removes the pool definition from \(server.settings.displayName). The directory and everything in it stay exactly where they are.")
+                .fixedSize(horizontal: false, vertical: true)
+            if let path = pool.targetPath {
+                Text(path)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if pool.isActive {
+                Text("The pool is running and will be stopped first.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Text("Virtual machines using disks from this pool keep working — libvirt addresses those by path, not through the pool.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func remove() {
+        isWorking = true
+        errorMessage = nil
+        Task {
+            do {
+                try await server.undefinePool(named: pool.name)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
         }
     }
 }

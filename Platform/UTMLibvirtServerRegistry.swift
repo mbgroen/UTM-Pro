@@ -34,6 +34,9 @@ final class UTMLibvirtServerRegistry: ObservableObject {
 
     private let defaults: UserDefaults
 
+    /// Background poll, so VMs started elsewhere do not sit stale.
+    private var pollingTask: Task<Void, Never>?
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         load()
@@ -120,6 +123,30 @@ final class UTMLibvirtServerRegistry: ObservableObject {
         for server in servers {
             await server.disconnect()
         }
+    }
+
+    /// Polls connected servers so state changed elsewhere shows up.
+    ///
+    /// libvirt has an event stream, but reaching it means holding an extra
+    /// long-lived channel and parsing an output format meant for humans.
+    /// Polling one batched command is far simpler and costs a single round
+    /// trip; the interval is long enough not to be chatty and short enough
+    /// that a VM started from the OMV web interface appears while the user is
+    /// still looking at the window.
+    func startPolling(every interval: TimeInterval = 15) {
+        pollingTask?.cancel()
+        pollingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                guard !Task.isCancelled else { return }
+                await self?.refreshAll()
+            }
+        }
+    }
+
+    func stopPolling() {
+        pollingTask?.cancel()
+        pollingTask = nil
     }
 
     /// Re-reads domains and pools on every connected server.
