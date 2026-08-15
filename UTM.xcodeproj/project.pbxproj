@@ -20,6 +20,7 @@
 		2C33B3A92566C9B100A954A6 /* VMContextMenuModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C33B3A82566C9B100A954A6 /* VMContextMenuModifier.swift */; };
 		2C33B3AA2566C9B100A954A6 /* VMContextMenuModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C33B3A82566C9B100A954A6 /* VMContextMenuModifier.swift */; };
 		2C6D9E03256EE454003298E6 /* VMDisplayQemuTerminalWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6D9E02256EE454003298E6 /* VMDisplayQemuTerminalWindowController.swift */; };
+		3DC74378BC6223D6E8CB7A39 /* VMLibvirtCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 488C4D3E9FE7C665987A8564 /* VMLibvirtCreateView.swift */; };
 		482944C1B166246950969BC6 /* VMLibvirtStorageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43E44A89A415C201E7903E28 /* VMLibvirtStorageView.swift */; };
 		485F43FBA9C5F21B3CDE82E7 /* VMLibvirtStorageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43E44A89A415C201E7903E28 /* VMLibvirtStorageView.swift */; };
 		4B224B9D279D4D8100B63CFF /* InListButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B224B9C279D4D8100B63CFF /* InListButtonStyle.swift */; };
@@ -32,6 +33,7 @@
 		75CF4DB9B38F3EAC8E6D3187 /* VMLibvirtDiskAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC94385BE425BFC8BBE38AD /* VMLibvirtDiskAddView.swift */; };
 		76B9475A8013CA539243B318 /* UTMLibvirtServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E0347FF8AE313637BEB2A7E /* UTMLibvirtServer.swift */; };
 		7850491E9DA8BB3351E0CDDB /* UTMLibvirtServerRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779843E7A82B8A66EA13114A /* UTMLibvirtServerRegistry.swift */; };
+		7AA64C00949F9DA69549DD6A /* VMLibvirtCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 488C4D3E9FE7C665987A8564 /* VMLibvirtCreateView.swift */; };
 		7F664E1A9B1D7829B3FC8784 /* VMLibvirtServerSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5137465E8EE9769092E46743 /* VMLibvirtServerSection.swift */; };
 		83034C0726AB630F006B4BAF /* UTMPendingVMView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83034C0626AB630F006B4BAF /* UTMPendingVMView.swift */; };
 		83034C0826AB630F006B4BAF /* UTMPendingVMView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83034C0626AB630F006B4BAF /* UTMPendingVMView.swift */; };
@@ -1325,6 +1327,7 @@
 		EDB74C7ABF8D1F3628476023 /* UTMLibvirtServerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E44C029A830EE1B56EB818 /* UTMLibvirtServerEditView.swift */; };
 		F07346FC8E9DF5B143BCF755 /* UTMLibvirtVirtualMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9164F81BD5E36959DE63224 /* UTMLibvirtVirtualMachine.swift */; };
 		FF0307552A84E3B70049979B /* QEMULauncher-InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FF0307532A84E3B70049979B /* QEMULauncher-InfoPlist.strings */; };
+		FF1748A68FC6E7EFEECEE2CE /* VMLibvirtCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 488C4D3E9FE7C665987A8564 /* VMLibvirtCreateView.swift */; };
 		FFB02A8C266CB09C006CD71A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FFB02A8A266CB09C006CD71A /* InfoPlist.strings */; };
 		FFB02A8D266CB09C006CD71A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FFB02A8A266CB09C006CD71A /* InfoPlist.strings */; };
 		FFB02A90266CB09C006CD71A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FFB02A8E266CB09C006CD71A /* InfoPlist.strings */; };
@@ -1718,6 +1721,7 @@
 		45D72A942B94CE89000D16E9 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		45D72A952B94CEE0000D16E9 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		45D72A962B94CEF5000D16E9 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = "pl.lproj/Info-RemotePlist.strings"; sourceTree = "<group>"; };
+		488C4D3E9FE7C665987A8564 /* VMLibvirtCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VMLibvirtCreateView.swift; path = Platform/Shared/VMLibvirtCreateView.swift; sourceTree = SOURCE_ROOT; };
 		4B224B9C279D4D8100B63CFF /* InListButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InListButtonStyle.swift; sourceTree = "<group>"; };
 		5137465E8EE9769092E46743 /* VMLibvirtServerSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VMLibvirtServerSection.swift; path = Platform/Shared/VMLibvirtServerSection.swift; sourceTree = SOURCE_ROOT; };
 		521F3EFA2414F73800130500 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -2610,6 +2614,7 @@
 				BDC94385BE425BFC8BBE38AD /* VMLibvirtDiskAddView.swift */,
 				43E44A89A415C201E7903E28 /* VMLibvirtStorageView.swift */,
 				188246EE9BA04E0C2BAB1A12 /* VMLibvirtVolumeListView.swift */,
+				488C4D3E9FE7C665987A8564 /* VMLibvirtCreateView.swift */,
 			);
 			name = Libvirt;
 			sourceTree = "<group>";
@@ -3970,6 +3975,7 @@
 				9584479A90AEFE7FCA9440B6 /* VMLibvirtDiskAddView.swift in Sources */,
 				485F43FBA9C5F21B3CDE82E7 /* VMLibvirtStorageView.swift in Sources */,
 				DA4C45CA86C173543E9C65F5 /* VMLibvirtVolumeListView.swift in Sources */,
+				7AA64C00949F9DA69549DD6A /* VMLibvirtCreateView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4190,6 +4196,7 @@
 				D7174595956C69AF9D1B2090 /* VMLibvirtDiskAddView.swift in Sources */,
 				482944C1B166246950969BC6 /* VMLibvirtStorageView.swift in Sources */,
 				0DAA4BFC96648714A1FE0688 /* VMLibvirtVolumeListView.swift in Sources */,
+				3DC74378BC6223D6E8CB7A39 /* VMLibvirtCreateView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4382,6 +4389,7 @@
 				75CF4DB9B38F3EAC8E6D3187 /* VMLibvirtDiskAddView.swift in Sources */,
 				11B64999B28752C781EF2513 /* VMLibvirtStorageView.swift in Sources */,
 				0CBD44D3826FF6607AB9879B /* VMLibvirtVolumeListView.swift in Sources */,
+				FF1748A68FC6E7EFEECEE2CE /* VMLibvirtCreateView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

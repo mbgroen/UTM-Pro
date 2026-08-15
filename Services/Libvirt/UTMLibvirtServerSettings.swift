@@ -166,6 +166,7 @@ enum UTMLibvirtServerError: Error {
     case credentialMissing
     case notConnected
     case hostKeyNotTrusted(fingerprint: String)
+    case volumeMissingAfterCreate(String)
 }
 
 extension UTMLibvirtServerError: LocalizedError {
@@ -177,6 +178,8 @@ extension UTMLibvirtServerError: LocalizedError {
             return NSLocalizedString("Not connected to this server.", comment: "UTMLibvirtServer")
         case .hostKeyNotTrusted(let fingerprint):
             return String(format: NSLocalizedString("The server presented host key %@, which has not been trusted yet.", comment: "UTMLibvirtServer"), fingerprint)
+        case .volumeMissingAfterCreate(let name):
+            return String(format: NSLocalizedString("The disk '%@' was created but the host did not list it afterwards, so the virtual machine was not defined.", comment: "UTMLibvirtServer"), name)
         }
     }
 }

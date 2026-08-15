@@ -160,6 +160,11 @@ do {
         }
     }
 
+    // Opt-in: defines and removes a throwaway VM.
+    if let pool = environment["LIBVIRT_CREATE_TEST_POOL"] {
+        try await CreateTest.run(libvirt: libvirt, pool: pool)
+    }
+
     // Checks the SSH tunnel the console depends on, without opening a console.
     if let target = environment["LIBVIRT_TUNNEL_TEST_DOMAIN"] {
         try await TunnelTest.run(connection: connection, libvirt: libvirt, domain: target)

@@ -225,3 +225,64 @@ public struct LibvirtHostInfo: Sendable, Hashable {
     public let cpuCount: Int?
     public let memoryBytes: UInt64?
 }
+
+// MARK: - Networks
+
+/// A network a new domain can attach to.
+public struct LibvirtNetworkOption: Sendable, Identifiable, Hashable {
+    public enum Kind: Sendable, Hashable {
+        /// A host bridge: the guest lands on the same network as the host.
+        case bridge
+        /// A libvirt-managed network, normally NAT behind the host.
+        case virtualNetwork
+    }
+
+    public let name: String
+    public let kind: Kind
+
+    public var id: String { "\(kind)/\(name)" }
+
+    public init(name: String, kind: Kind) {
+        self.name = name
+        self.kind = kind
+    }
+
+    public var displayName: String {
+        if isContainerBridge {
+            return String(format: NSLocalizedString("%@ (container network)", comment: "LibvirtNetworkOption"), name)
+        }
+        switch kind {
+        case .bridge:
+            return String(format: NSLocalizedString("%@ (bridged to your network)", comment: "LibvirtNetworkOption"), name)
+        case .virtualNetwork:
+            return String(format: NSLocalizedString("%@ (virtual network, behind NAT)", comment: "LibvirtNetworkOption"), name)
+        }
+    }
+
+    /// True for bridges that Docker, LXC or libvirt created for their own
+    /// containers.
+    ///
+    /// A NAS accumulates a lot of these — one per Docker network — and they
+    /// sort ahead of the real bridge alphabetically. Attaching a VM to one
+    /// puts it on an isolated container network, which looks like a VM that
+    /// boots fine and has no connectivity.
+    public var isContainerBridge: Bool {
+        guard kind == .bridge else { return false }
+        if name == "docker0" || name.hasPrefix("lxcbr") || name.hasPrefix("virbr") {
+            return true
+        }
+        // Docker names its per-network bridges br-<12 hex digits>.
+        if name.hasPrefix("br-") {
+            let suffix = name.dropFirst(3)
+            return suffix.count == 12 && suffix.allSatisfy(\.isHexDigit)
+        }
+        return false
+    }
+
+    /// Ordering for presentation: the bridge someone actually wants first,
+    /// container plumbing last.
+    public var sortRank: Int {
+        if isContainerBridge { return 2 }
+        return kind == .bridge ? 0 : 1
+    }
+}

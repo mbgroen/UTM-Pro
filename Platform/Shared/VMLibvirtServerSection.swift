@@ -41,6 +41,7 @@ struct VMLibvirtServerSection: View {
     @State private var isExpanded: Bool = true
     @State private var confirmRemove: Bool = false
     @State private var showStorage: Bool = false
+    @State private var showCreateVM: Bool = false
 
     var body: some View {
         Section(header: header) {
@@ -79,6 +80,9 @@ struct VMLibvirtServerSection: View {
         .sheet(isPresented: $showStorage) {
             VMLibvirtStorageView(server: server)
         }
+        .sheet(isPresented: $showCreateVM) {
+            VMLibvirtCreateView(server: server)
+        }
         .confirmationDialog("Remove this server?",
                             isPresented: $confirmRemove,
                             titleVisibility: .visible) {
@@ -102,6 +106,11 @@ struct VMLibvirtServerSection: View {
                         Task { await server.refresh() }
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    Button {
+                        showCreateVM = true
+                    } label: {
+                        Label("New Virtual Machine…", systemImage: "plus.circle")
                     }
                     Button {
                         showStorage = true

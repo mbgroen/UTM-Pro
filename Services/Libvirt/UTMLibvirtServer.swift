@@ -299,6 +299,60 @@ final class UTMLibvirtServer: ObservableObject, Identifiable {
         try await refreshPools()
     }
 
+    // MARK: - Creating a VM
+
+    /// Creates a disk and defines a domain around it.
+    ///
+    /// The volume is created first because the domain XML has to name its
+    /// path. If defining the domain then fails, the orphaned volume is removed
+    /// rather than left behind for someone to puzzle over later.
+    func createVirtualMachine(name: String,
+                              notes: String?,
+                              memoryBytes: UInt64,
+                              vcpuCount: Int,
+                              poolName: String,
+                              volumeName: String,
+                              diskBytes: UInt64,
+                              diskFormat: LibvirtVolumeFormat,
+                              isoPath: String?,
+                              network: LibvirtDomainTemplate.Network,
+                              startImmediately: Bool) async throws {
+        let host = try libvirt
+
+        try await host.createVolume(named: volumeName,
+                                    inPool: poolName,
+                                    capacityBytes: diskBytes,
+                                    format: diskFormat)
+
+        let volumes = try await host.listVolumes(inPool: poolName)
+        guard let volume = volumes.first(where: { $0.name == volumeName }) else {
+            throw UTMLibvirtServerError.volumeMissingAfterCreate(volumeName)
+        }
+
+        let template = LibvirtDomainTemplate(name: name,
+                                             notes: notes,
+                                             memoryBytes: memoryBytes,
+                                             vcpuCount: vcpuCount,
+                                             diskPath: volume.path,
+                                             diskFormat: diskFormat,
+                                             isoPath: isoPath,
+                                             network: network)
+        do {
+            try await host.define(domainXML: template.domainXML())
+        } catch {
+            // Leaving a disk behind for a VM that does not exist is worse than
+            // the original failure.
+            try? await host.deleteVolume(named: volumeName, inPool: poolName)
+            throw error
+        }
+
+        if startImmediately {
+            try? await host.start(domain: name)
+        }
+
+        await refresh()
+    }
+
     /// Names of domains currently using a given image path.
     ///
     /// Deleting a volume another VM is booting from destroys that VM, and

@@ -512,6 +512,51 @@ public actor LibvirtHost {
         }
     }
 
+    // MARK: - Networks
+
+    /// The network attachments a new domain can use.
+    ///
+    /// Both kinds are offered because they behave differently: a bridge puts
+    /// the guest on the same LAN as the host, while a libvirt network is NAT
+    /// behind the host. On a NAS the bridge is nearly always what is wanted,
+    /// which is why it is listed first.
+    public func listNetworkOptions() async throws -> [LibvirtNetworkOption] {
+        var options: [LibvirtNetworkOption] = []
+
+        // Host bridges appear in sysfs; anything with a `bridge` directory is
+        // one. Virtual interfaces belonging to guests are excluded, since
+        // attaching to those makes no sense.
+        let bridges = try await connection.run(
+            "for d in /sys/class/net/*/bridge; do [ -d \"$d\" ] && basename \"$(dirname \"$d\")\"; done"
+        )
+        if bridges.status == 0 {
+            for name in bridges.output.split(separator: "\n") {
+                let trimmed = name.trimmingCharacters(in: .whitespaces)
+                guard !trimmed.isEmpty, !trimmed.hasPrefix("virbr") else { continue }
+                options.append(LibvirtNetworkOption(name: trimmed, kind: .bridge))
+            }
+        }
+
+        let networks = try? await virshChecked {
+            $0.flag("net-list")
+            $0.flag("--all")
+            $0.flag("--name")
+        }
+        for name in (networks ?? "").split(separator: "\n") {
+            let trimmed = name.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
+            options.append(LibvirtNetworkOption(name: trimmed, kind: .virtualNetwork))
+        }
+
+        // Rank so the host's real bridge leads, and container plumbing sinks
+        // to the bottom rather than winning on alphabetical order.
+        return options.sorted {
+            $0.sortRank != $1.sortRank
+                ? $0.sortRank < $1.sortRank
+                : $0.name.localizedStandardCompare($1.name) == .orderedAscending
+        }
+    }
+
     // MARK: - Storage pools
 
     public func listPools() async throws -> [LibvirtPool] {
