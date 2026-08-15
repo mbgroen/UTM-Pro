@@ -52,6 +52,108 @@ struct VMContextMenuModifier: ViewModifier {
     /// - Returns: View
     @available(macOS 12, *)
     @ViewBuilder func bodyFull(content: Content) -> some View {
+        #if WITH_REMOTE_KVM
+        if let libvirtVM = vm.wrapped as? UTMLibvirtVirtualMachine {
+            remoteMenu(content: content, vm: libvirtVM)
+        } else {
+            localMenu(content: content)
+        }
+        #else
+        localMenu(content: content)
+        #endif
+    }
+
+    #if WITH_REMOTE_KVM
+    /// Menu for a domain that lives on a remote host.
+    ///
+    /// Deliberately not the local menu with items disabled: revealing in
+    /// Finder, cloning, moving and templating have no meaning for a domain
+    /// that has no package on this Mac, and showing them greyed out would
+    /// suggest they are merely unavailable right now.
+    @available(macOS 12, *)
+    @ViewBuilder func remoteMenu(content: Content, vm libvirtVM: UTMLibvirtVirtualMachine) -> some View {
+        content.contextMenu {
+            switch libvirtVM.state {
+            case .started:
+                Button {
+                    perform { try await libvirtVM.stop(usingMethod: .request) }
+                } label: {
+                    Label("Shut Down", systemImage: "power")
+                }.help("Ask the guest operating system to shut down.")
+
+                Button {
+                    perform { try await libvirtVM.pause() }
+                } label: {
+                    Label("Pause", systemImage: "pause")
+                }.help("Freeze the VM. Its memory stays on the host.")
+
+                Button {
+                    perform { try await libvirtVM.restart() }
+                } label: {
+                    Label("Reset", systemImage: "arrow.clockwise")
+                }.help("Hard reset, like pressing the reset button.")
+
+                Divider()
+
+                DestructiveButton {
+                    perform { try await libvirtVM.stop(usingMethod: .force) }
+                } label: {
+                    Label("Force Stop", systemImage: "stop")
+                }.help("Cut power immediately. The guest gets no chance to flush its disks.")
+
+            case .paused:
+                Button {
+                    perform { try await libvirtVM.resume() }
+                } label: {
+                    Label("Resume", systemImage: "playpause")
+                }.help("Resume the paused VM.")
+
+                DestructiveButton {
+                    perform { try await libvirtVM.stop(usingMethod: .force) }
+                } label: {
+                    Label("Force Stop", systemImage: "stop")
+                }.help("Cut power immediately.")
+
+            default:
+                Button {
+                    perform { try await libvirtVM.start(options: []) }
+                } label: {
+                    Label("Run", systemImage: "play")
+                }.help("Start the VM on its host.")
+            }
+
+            Divider()
+
+            Button {
+                perform { try await libvirtVM.setAutostart(!libvirtVM.config.isAutostart) }
+            } label: {
+                Label(libvirtVM.config.isAutostart ? "Disable Autostart" : "Enable Autostart",
+                      systemImage: libvirtVM.config.isAutostart ? "bolt.slash" : "bolt")
+            }.help("Whether the host starts this VM on boot.")
+
+            Button {
+                perform { try await libvirtVM.refreshState() }
+            } label: {
+                Label("Refresh", systemImage: "arrow.triangle.2.circlepath")
+            }.help("Re-read this VM's state from the host.")
+        }
+    }
+
+    /// Runs a host operation and surfaces any failure as an alert, rather than
+    /// letting it disappear into an unobserved Task.
+    private func perform(_ body: @escaping () async throws -> Void) {
+        Task {
+            do {
+                try await body()
+            } catch {
+                data.alertItem = .message(error.localizedDescription)
+            }
+        }
+    }
+    #endif
+
+    @available(macOS 12, *)
+    @ViewBuilder func localMenu(content: Content) -> some View {
         content.contextMenu {
             #if os(macOS)
             Button {

@@ -20,6 +20,27 @@ import Carbon.HIToolbox
 @available(macOS 11, *)
 extension UTMData {
     func run(vm: VMData, options: UTMVirtualMachineStartOptions = [], startImmediately: Bool = true) {
+        #if WITH_REMOTE_KVM
+        // A remote domain runs on its host, not here. There is no local window
+        // to open and no local architecture requirement to satisfy, so this
+        // must be handled before the backend checks below — they would
+        // otherwise reject an x86_64 guest simply because this Mac is arm64.
+        if let libvirtVM = vm.wrapped as? UTMLibvirtVirtualMachine {
+            guard startImmediately else { return }
+            Task {
+                do {
+                    if libvirtVM.state == .paused {
+                        try await libvirtVM.resume()
+                    } else {
+                        try await libvirtVM.start(options: options)
+                    }
+                } catch {
+                    self.alertItem = .message(error.localizedDescription)
+                }
+            }
+            return
+        }
+        #endif
         var window: Any? = vmWindows[vm]
         if window == nil {
             let close = {

@@ -210,6 +210,18 @@ import SwiftUI
     fileprivate func subscribeToChildren() {
         var s: [AnyCancellable] = []
         if let wrapped = wrapped {
+            // Take the current state now rather than waiting for the first
+            // change notification. A local VM is always stopped when it is
+            // wrapped, but a remote one is wrapped around a domain that may
+            // already be running, and without this it would show as stopped
+            // until it happened to change.
+            if state != wrapped.state {
+                state = wrapped.state
+            }
+            if screenshot == nil {
+                screenshot = wrapped.screenshot
+            }
+
             wrapped.onConfigurationChange = { [weak self] in
                 self?.objectWillChange.send()
                 Task { @MainActor in
