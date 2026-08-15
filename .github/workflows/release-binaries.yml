@@ -77,7 +77,7 @@ jobs:
           upload-chunk-size: 1048576
 
       - name: Compress Sysroot
-        run: tar -acf sysroot.tgz sysroot-macOS-*
+        run: tar -acf sysroot.tgz sysroot-*
 
       - name: Upload Sysroot
         uses: actions/upload-artifact@v4

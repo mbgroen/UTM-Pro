@@ -30,6 +30,19 @@ env:
 jobs:
   configuration:
     name: Setup configuration
+    # This workflow only works in the upstream repository. It assumes
+    # self-hosted runners that already carry the build dependencies: the
+    # "Install Requirements" step is skipped whenever the runner is not the
+    # GitHub-hosted image, and that comparison never matches because the
+    # configuration step below writes the value with quotes included. On a
+    # fork with hosted runners the dependencies are therefore never installed
+    # and every sysroot build fails on a missing Python module.
+    #
+    # Fixing the comparison is not the answer here: it would rebuild eleven
+    # sysroot variants from scratch on every push. Fork releases are built by
+    # release-binaries.yml instead. Left runnable on demand so it can still be
+    # used deliberately.
+    if: github.repository == 'utmapp/UTM' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
       runner: ${{ steps.checker.outputs.runners }}
