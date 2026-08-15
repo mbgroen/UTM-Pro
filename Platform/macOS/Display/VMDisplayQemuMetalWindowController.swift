@@ -496,7 +496,7 @@ extension VMDisplayQemuMetalWindowController: VMMetalViewInputDelegate {
             return // don't capture if modal is shown
         }
         let action = { () -> Void in
-            self.qemuVM.requestInputTablet(false)
+            self.spiceVM.requestInputTablet(false)
             self.metalView?.captureMouse()
             
             self.captureMouseToolbarButton.state = .on
@@ -533,7 +533,7 @@ extension VMDisplayQemuMetalWindowController: VMMetalViewInputDelegate {
     
     func releaseMouse() {
         syncCapsLock()
-        qemuVM.requestInputTablet(true)
+        spiceVM.requestInputTablet(true)
         metalView?.releaseMouse()
         self.captureMouseToolbarButton.state = .off
         self.window?.subtitle = defaultSubtitle
@@ -543,7 +543,7 @@ extension VMDisplayQemuMetalWindowController: VMMetalViewInputDelegate {
         guard let window = self.window else { return }
         guard let vmInput = vmInput, !vmInput.serverModeCursor else {
             logger.trace("requesting client mode cursor")
-            qemuVM.requestInputTablet(true)
+            spiceVM.requestInputTablet(true)
             return
         }
         let currentScreenScale = window.screen?.backingScaleFactor ?? 1.0
@@ -560,7 +560,7 @@ extension VMDisplayQemuMetalWindowController: VMMetalViewInputDelegate {
     func mouseMove(relativePoint: CGPoint, buttonMask: CSInputButton) {
         guard let vmInput = vmInput, vmInput.serverModeCursor else {
             logger.trace("requesting server mode cursor")
-            qemuVM.requestInputTablet(false)
+            spiceVM.requestInputTablet(false)
             return
         }
         let translated = CGPoint(x: relativePoint.x, y: -relativePoint.y)
@@ -713,7 +713,7 @@ extension VMDisplayQemuMetalWindowController {
         }
         let keys = keyboardShortcuts[index]
         withErrorAlert {
-            try await self.qemuVM.monitor?.sendKeys(keys)
+            try await self.qemuVM?.monitor?.sendKeys(keys)
         }
     }
     

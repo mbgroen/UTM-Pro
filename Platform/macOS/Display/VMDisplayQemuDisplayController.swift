@@ -21,12 +21,27 @@ class VMDisplayQemuWindowController: VMDisplayWindowController {
     private var connectedUsbDevices: [CSUSBDevice] = []
     @Setting("NoUsbPrompt") private var isNoUsbPrompt: Bool = false
     
-    var qemuVM: UTMQemuVirtualMachine! {
+    /// The VM as a SPICE client, whatever backend provides it.
+    ///
+    /// A remote libvirt domain speaks the same SPICE protocol as a local QEMU
+    /// process, so everything the display needs comes from this. Use it in
+    /// preference to `qemuVM`.
+    var spiceVM: (any UTMSpiceVirtualMachine)! {
+        vm as? any UTMSpiceVirtualMachine
+    }
+
+    /// The VM as a local QEMU process, or nil when it is not one.
+    ///
+    /// Only for things that genuinely require a QEMU process on this machine —
+    /// the monitor, the guest agent, host file access. Anything reached
+    /// through this must tolerate nil, because a remote domain has no local
+    /// process behind it.
+    var qemuVM: UTMQemuVirtualMachine? {
         vm as? UTMQemuVirtualMachine
     }
-    
+
     var vmQemuConfig: UTMQemuConfiguration! {
-        qemuVM?.config
+        spiceVM?.config
     }
     
     var defaultTitle: String {
@@ -34,7 +49,7 @@ class VMDisplayQemuWindowController: VMDisplayWindowController {
     }
     
     var defaultSubtitle: String {
-        if qemuVM.isRunningAsDisposible {
+        if spiceVM.isRunningAsDisposible {
             return NSLocalizedString("Disposable Mode", comment: "VMDisplayQemuDisplayController")
         } else {
             return ""
@@ -56,11 +71,11 @@ class VMDisplayQemuWindowController: VMDisplayWindowController {
     
     override func enterLive() {
         if !isSecondary {
-            qemuVM.ioServiceDelegate = self
+            spiceVM.ioServiceDelegate = self
         }
         setControl(.drives, isEnabled: vmQemuConfig.drives.count > 0)
         setControl(.sharedFolder, isEnabled: vmQemuConfig.sharing.directoryShareMode == .webdav) // virtfs cannot dynamically change
-        setControl(.usb, isEnabled: qemuVM.hasUsbRedirection)
+        setControl(.usb, isEnabled: spiceVM.hasUsbRedirection)
         window!.title = defaultTitle
         window!.subtitle = defaultSubtitle
         super.enterLive()
@@ -122,7 +137,7 @@ class VMDisplayQemuWindowController: VMDisplayWindowController {
                                        keyEquivalent: "")
                 eject.target = self
                 eject.tag = i
-                eject.isEnabled = qemuVM.externalImageURL(for: drive) != nil
+                eject.isEnabled = qemuVM?.externalImageURL(for: drive) != nil
                 submenu.addItem(eject)
                 let change = NSMenuItem(title: NSLocalizedString("Change", comment: "VMDisplayWindowController"),
                                         action: #selector(changeDriveImage),
@@ -146,7 +161,7 @@ class VMDisplayQemuWindowController: VMDisplayWindowController {
         let drive = vmQemuConfig.drives[menu.tag]
         Task.detached(priority: .background) { [self] in
             do {
-                try await qemuVM.eject(drive)
+                try await spiceVM.eject(drive)
             } catch {
                 Task { @MainActor in
                     showErrorAlert(error.localizedDescription)
@@ -170,7 +185,7 @@ class VMDisplayQemuWindowController: VMDisplayWindowController {
             }
             Task.detached(priority: .background) { [self] in
                 do {
-                    try await qemuVM.changeMedium(drive, to: url)
+                    try await spiceVM.changeMedium(drive, to: url)
                 } catch {
                     Task { @MainActor in
                         showErrorAlert(error.localizedDescription)
@@ -189,7 +204,7 @@ class VMDisplayQemuWindowController: VMDisplayWindowController {
     }
     
     @nonobjc private func label(for drive: UTMQemuConfigurationDrive) -> String {
-        let imageURL = qemuVM.externalImageURL(for: drive) ?? drive.imageURL
+        let imageURL = qemuVM?.externalImageURL(for: drive) ?? drive.imageURL
         return String.localizedStringWithFormat(NSLocalizedString("%@ (%@): %@", comment: "VMDisplayQemuDisplayController"),
                                                 drive.imageType.prettyValue,
                                                 drive.interface.prettyValue,
@@ -197,7 +212,9 @@ class VMDisplayQemuWindowController: VMDisplayWindowController {
     }
     
     @MainActor private func installWindowsGuestTools(sender: AnyObject) {
-        NotificationCenter.default.post(name: NSNotification.InstallGuestTools, object: self.qemuVM)
+        if let qemuVM = self.qemuVM {
+            NotificationCenter.default.post(name: NSNotification.InstallGuestTools, object: qemuVM)
+        }
     }
 }
 
@@ -219,7 +236,7 @@ extension VMDisplayQemuWindowController {
             }
             Task.detached(priority: .background) { [self] in
                 do {
-                    try await self.qemuVM.changeSharedDirectory(to: url)
+                    try await self.qemuVM?.changeSharedDirectory(to: url)
                 } catch {
                     Task { @MainActor in
                         self.showErrorAlert(error.localizedDescription)
@@ -491,7 +508,7 @@ extension VMDisplayQemuWindowController {
     }
 
     func isAutoConnect(_ device: CSUSBDevice) -> Bool {
-        return qemuVM.isAutoConnect(for: device)
+        return qemuVM?.isAutoConnect(for: device) ?? false
     }
 
     @objc func setAutoConnect(sender: AnyObject) {
@@ -500,6 +517,7 @@ extension VMDisplayQemuWindowController {
             return
         }
         let device = allUsbDevices[menu.tag]
+        guard let qemuVM = qemuVM else { return }
         qemuVM.setAutoConnect(!qemuVM.isAutoConnect(for: device), for: device)
     }
 
@@ -532,7 +550,7 @@ extension VMDisplayQemuWindowController {
 extension VMDisplayQemuWindowController {
     override func updateWindowsMenu(_ menu: NSMenu) {
         menu.autoenablesItems = false
-        guard let displays = qemuVM.ioService?.displays else {
+        guard let displays = spiceVM.ioService?.displays else {
             return
         }
         for display in displays {
@@ -553,7 +571,7 @@ extension VMDisplayQemuWindowController {
             item.action = #selector(showWindowFromDisplay)
             menu.addItem(item)
         }
-        for serial in qemuVM.ioService!.serials {
+        for serial in spiceVM.ioService?.serials ?? [] {
             guard let id = configIdForSerial(serial) else {
                 continue
             }
@@ -577,7 +595,7 @@ extension VMDisplayQemuWindowController {
         if self is VMDisplayQemuMetalWindowController && self.id == id {
             return
         }
-        guard let display = qemuVM.ioService?.displays.first(where: { $0.monitorID == id}) else {
+        guard let display = spiceVM.ioService?.displays.first(where: { $0.monitorID == id}) else {
             return
         }
         if let window = findWindow(for: display) {
@@ -591,7 +609,7 @@ extension VMDisplayQemuWindowController {
         if self is VMDisplayQemuTerminalWindowController && self.id == id {
             return
         }
-        guard let serial = qemuVM.ioService?.serials.first(where: { id == configIdForSerial($0) }) else {
+        guard let serial = spiceVM.ioService?.serials.first(where: { id == configIdForSerial($0) }) else {
             return
         }
         if let window = findWindow(for: serial) {
@@ -636,6 +654,9 @@ extension VMDisplayQemuWindowController {
         guard let primary = (primaryWindow ?? self) as? VMDisplayQemuMetalWindowController else {
             return nil
         }
+        guard let qemuVM = qemuVM else {
+            return nil // secondary displays are not supported for remote VMs yet
+        }
         let secondary = VMDisplayQemuMetalWindowController(secondaryFromDisplay: display, primary: primary, vm: qemuVM, id: id)
         registerSecondaryWindow(secondary)
         return secondary
@@ -679,6 +700,9 @@ extension VMDisplayQemuWindowController {
         guard id < vmQemuConfig.serials.count else {
             return nil
         }
+        guard let qemuVM = qemuVM else {
+            return nil // secondary serial windows are not supported for remote VMs yet
+        }
         let secondary = VMDisplayQemuTerminalWindowController(secondaryFromSerialPort: serial, vm: qemuVM, id: id)
         registerSecondaryWindow(secondary)
         return secondary
@@ -689,7 +713,7 @@ extension VMDisplayQemuWindowController {
 extension VMDisplayQemuWindowController {
     @objc override func didWake(_ notification: NSNotification) {
         Task {
-            try? await qemuVM.guestAgent?.guestSetTime(NSDate.now.timeIntervalSince1970)
+            try? await qemuVM?.guestAgent?.guestSetTime(NSDate.now.timeIntervalSince1970)
         }
     }
 }
