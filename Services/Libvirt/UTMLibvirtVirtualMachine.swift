@@ -16,24 +16,27 @@
 
 import Foundation
 import LibvirtKit
+import QEMUKitInternal
+
+/// How long to wait for the console to come up before giving up.
+private let kConsoleConnectTimeout: TimeInterval = 15
 
 /// A virtual machine running on a remote libvirt host.
 ///
-/// Conforms to `UTMVirtualMachine` so it can use the same list, detail and
-/// session views as local VMs. The parts of that protocol that assume a local
-/// `.utm` package are not implemented, following the precedent set by
-/// `UTMRemoteSpiceVirtualMachine`.
+/// Conforms to `UTMSpiceVirtualMachine` so it can reuse UTM's display stack:
+/// the console is SPICE either way, and the only real difference is that the
+/// connection goes to a host across the network rather than a local socket.
+/// That protocol fixes the configuration type, so the domain is projected into
+/// a `UTMQemuConfiguration` and the libvirt-only facts live in `domainInfo`.
 @MainActor
-final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
+final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
     struct Capabilities: UTMVirtualMachineCapabilities {
         /// libvirt's `destroy` is a process kill in all but name.
         var supportsProcessKill: Bool { true }
 
         var supportsSnapshots: Bool { true }
 
-        /// Screenshots would need a console connection; the list shows state
-        /// instead.
-        var supportsScreenshots: Bool { false }
+        var supportsScreenshots: Bool { true }
 
         var supportsDisposibleMode: Bool { false }
 
@@ -47,13 +50,17 @@ final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
     /// The host this domain lives on.
     private let server: UTMLibvirtServer
 
-    private(set) var config: UTMLibvirtConfiguration
+    private(set) var config: UTMQemuConfiguration
+
+    /// Everything about the domain that a QEMU configuration cannot express.
+    private(set) var domainInfo: UTMLibvirtDomainInfo
 
     private(set) var registryEntry: UTMRegistryEntry
 
-    /// libvirt addresses domains by name, so this is carried separately from
-    /// the display name.
-    var domainName: String { config.domainName }
+    var domainName: String { domainInfo.domainName }
+
+    /// The local port a console tunnel is bound to, while one is open.
+    private var tunnelPort: Int?
 
     // MARK: - UTMVirtualMachine plumbing
 
@@ -88,28 +95,47 @@ final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
 
     /// Snapshots need a disk that can hold them. Reported up front so the UI
     /// can disable the control rather than failing when the user tries.
-    var snapshotUnsupportedError: Error? {
-        config.supportsInternalSnapshots
-            ? nil
-            : UTMLibvirtVirtualMachineError.noSnapshotCapableDisk
-    }
+    private(set) var snapshotUnsupportedError: Error?
 
     var isHeadless: Bool {
-        config.graphics.isEmpty
+        !domainInfo.hasSupportedConsole
     }
+
+    // MARK: - SPICE
+
+    weak var ioServiceDelegate: UTMSpiceIODelegate? {
+        didSet {
+            if let ioService = ioService {
+                ioService.delegate = ioServiceDelegate
+            }
+        }
+    }
+
+    private(set) var ioService: UTMSpiceIO? {
+        didSet {
+            oldValue?.delegate = nil
+            ioService?.delegate = ioServiceDelegate
+        }
+    }
+
+    var changeCursorRequestInProgress: Bool = false
 
     init(server: UTMLibvirtServer, domain: LibvirtDomain) {
         self.server = server
-        self.config = UTMLibvirtConfiguration(domain: domain, serverId: server.id)
+        self.config = UTMQemuConfiguration.projecting(domain: domain)
+        self.domainInfo = UTMLibvirtDomainInfo(domain: domain, serverId: server.id)
         self.pathUrl = Self.syntheticPath(serverId: server.id, domainName: domain.name)
         self.registryEntry = UTMRegistry.shared.entry(uuid: domain.uuid,
                                                       name: domain.name,
                                                       path: self.pathUrl.path)
         self.state = Self.utmState(from: domain.state)
+        self.snapshotUnsupportedError = domain.supportsInternalSnapshots
+            ? nil
+            : UTMLibvirtVirtualMachineError.noSnapshotCapableDisk
     }
 
     /// Not applicable: remote domains are never instantiated from a package.
-    init(packageUrl: URL, configuration: UTMLibvirtConfiguration, isShortcut: Bool) throws {
+    init(packageUrl: URL, configuration: UTMQemuConfiguration, isShortcut: Bool) throws {
         throw UTMVirtualMachineError.notImplemented
     }
 
@@ -135,7 +161,11 @@ final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
 
     /// Applies a freshly read domain to this VM.
     func update(from domain: LibvirtDomain) {
-        config.apply(domain: domain)
+        config.update(projecting: domain)
+        domainInfo = UTMLibvirtDomainInfo(domain: domain, serverId: server.id)
+        snapshotUnsupportedError = domain.supportsInternalSnapshots
+            ? nil
+            : UTMLibvirtVirtualMachineError.noSnapshotCapableDisk
         onConfigurationChange?()
         let newState = Self.utmState(from: domain.state)
         if newState != state {
@@ -173,7 +203,7 @@ final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
         let previous = state
         state = transient
         do {
-            try await body(server.libvirt)
+            try await body(try server.libvirt)
             try await refreshState()
         } catch {
             state = previous
@@ -184,7 +214,10 @@ final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
     /// Re-reads the domain's state from the host.
     func refreshState() async throws {
         let current = try await server.libvirt.state(ofDomain: domainName)
-        state = Self.utmState(from: current)
+        let newState = Self.utmState(from: current)
+        if newState != state {
+            state = newState
+        }
     }
 
     func start(options: UTMVirtualMachineStartOptions) async throws {
@@ -208,6 +241,7 @@ final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
                 try await host.destroy(domain: name)
             }
         }
+        await disconnectConsole()
     }
 
     func restart() async throws {
@@ -237,9 +271,143 @@ final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
         update(from: refreshed)
     }
 
+    // MARK: - Console
+
+    /// Connects to the domain's console.
+    ///
+    /// The connection goes through the server, which decides whether to tunnel
+    /// it over SSH or reach the host's console port directly.
+    func connectConsole() async throws {
+        guard domainInfo.hasSupportedConsole else {
+            throw UTMLibvirtVirtualMachineError.noConsole
+        }
+        guard state == .started || state == .paused else {
+            throw UTMLibvirtVirtualMachineError.notRunning
+        }
+        if ioService != nil {
+            return
+        }
+
+        let address = try await server.consoleAddress(for: self)
+        tunnelPort = address.port
+
+        let options: UTMSpiceIOOptions = []
+        let ioService = UTMSpiceIO(host: address.host,
+                                   port: address.port,
+                                   password: nil,
+                                   options: options)
+        ioService.logHandler = { (line: String) -> Void in
+            guard !line.contains("spice_make_scancode") else {
+                return // do not log key presses for privacy reasons
+            }
+            logger.debug("\(line)")
+        }
+        let coordinator = ConnectCoordinator()
+        ioService.connectDelegate = coordinator
+        do {
+            try ioService.start()
+            try ioService.connect()
+        } catch {
+            ioService.connectDelegate = nil
+            await server.closeConsole(for: self)
+            tunnelPort = nil
+            throw error
+        }
+
+        // This build of the SPICE layer reports failures through the delegate
+        // but has no success callback, so completion is observed rather than
+        // awaited. The deadline matters: a tunnel to a port nothing is
+        // listening on would otherwise hang here indefinitely.
+        let deadline = Date().addingTimeInterval(kConsoleConnectTimeout)
+        while !ioService.isConnected {
+            if let message = coordinator.errorMessage {
+                ioService.connectDelegate = nil
+                ioService.disconnect()
+                await server.closeConsole(for: self)
+                tunnelPort = nil
+                throw UTMLibvirtVirtualMachineError.consoleFailed(message)
+            }
+            if Date() >= deadline {
+                ioService.connectDelegate = nil
+                ioService.disconnect()
+                await server.closeConsole(for: self)
+                tunnelPort = nil
+                throw UTMLibvirtVirtualMachineError.consoleTimedOut
+            }
+            try await Task.sleep(nanoseconds: 100 * NSEC_PER_MSEC)
+        }
+
+        ioService.connectDelegate = nil
+        self.ioService = ioService
+    }
+
+    func disconnectConsole() async {
+        ioService?.disconnect()
+        ioService = nil
+        if tunnelPort != nil {
+            await server.closeConsole(for: self)
+            tunnelPort = nil
+        }
+    }
+
+    /// Captures the failure message the SPICE layer reports asynchronously.
+    ///
+    /// The monitor and guest-agent callbacks are QEMU-process concepts that a
+    /// libvirt domain never routes to us, so they are ignored.
+    private final class ConnectCoordinator: NSObject, QEMUInterfaceConnectDelegate {
+        private let lock = NSLock()
+        private var _errorMessage: String?
+
+        var errorMessage: String? {
+            lock.lock()
+            defer { lock.unlock() }
+            return _errorMessage
+        }
+
+        func qemuInterface(_ qemuInterface: any QEMUInterface, didErrorWithMessage message: String) {
+            lock.lock()
+            _errorMessage = message
+            lock.unlock()
+        }
+
+        func qemuInterface(_ qemuInterface: any QEMUInterface, didCreateMonitorPort port: (any QEMUPort)?) {
+        }
+
+        func qemuInterface(_ qemuInterface: any QEMUInterface, didCreateGuestAgentPort port: (any QEMUPort)?) {
+        }
+    }
+
+    func requestInputTablet(_ tablet: Bool) {
+        guard let ioService = ioService, !changeCursorRequestInProgress else {
+            return
+        }
+        changeCursorRequestInProgress = true
+        ioService.primaryInput?.requestMouseMode(!tablet)
+        changeCursorRequestInProgress = false
+    }
+
+    // MARK: - Unsupported on a remote domain
+
+    /// Changing media means rewriting the domain's XML on the host, which is
+    /// storage management rather than a console operation.
+    func eject(_ drive: UTMQemuConfigurationDrive) async throws {
+        throw UTMLibvirtVirtualMachineError.notSupportedRemotely
+    }
+
+    func changeMedium(_ drive: UTMQemuConfigurationDrive, to url: URL) async throws {
+        throw UTMLibvirtVirtualMachineError.notSupportedRemotely
+    }
+
+    func stopAccessingPath(_ path: String) async {
+        // No local security-scoped resources are held for a remote domain.
+    }
+
+    func changeVirtfsSharedDirectory(with bookmark: Data, isSecurityScoped: Bool) async throws {
+        throw UTMLibvirtVirtualMachineError.notSupportedRemotely
+    }
+
     // MARK: - Snapshots
 
-    /// Lists the domain's snapshots.
     func listSnapshots() async throws -> [UTMVirtualMachineSnapshot] {
         try await server.libvirt.snapshots(ofDomain: domainName).map { snapshot in
             UTMVirtualMachineSnapshot(name: snapshot.name,
@@ -281,12 +449,6 @@ final class UTMLibvirtVirtualMachine: UTMVirtualMachine {
         return formatter.string(from: Date())
     }
 
-    // MARK: - Screenshots
-
-    func takeScreenshot() async -> Bool {
-        false
-    }
-
     func reloadScreenshotFromFile() throws {
         // No local package to read one from.
     }
@@ -299,6 +461,10 @@ enum UTMLibvirtVirtualMachineError: Error {
     case snapshotNameRequired
     case optionUnsupported
     case noConsole
+    case notRunning
+    case consoleFailed(String)
+    case notSupportedRemotely
+    case consoleTimedOut
 }
 
 extension UTMLibvirtVirtualMachineError: LocalizedError {
@@ -311,7 +477,15 @@ extension UTMLibvirtVirtualMachineError: LocalizedError {
         case .optionUnsupported:
             return NSLocalizedString("This start option is not supported for remote virtual machines.", comment: "UTMLibvirtVirtualMachine")
         case .noConsole:
-            return NSLocalizedString("This virtual machine has no graphical console configured.", comment: "UTMLibvirtVirtualMachine")
+            return NSLocalizedString("This virtual machine has no SPICE console configured, so there is no display to show.", comment: "UTMLibvirtVirtualMachine")
+        case .notRunning:
+            return NSLocalizedString("The virtual machine must be running before its console can be opened.", comment: "UTMLibvirtVirtualMachine")
+        case .consoleFailed(let message):
+            return String(format: NSLocalizedString("Could not open the console: %@", comment: "UTMLibvirtVirtualMachine"), message)
+        case .notSupportedRemotely:
+            return NSLocalizedString("This is not supported for virtual machines on a remote host.", comment: "UTMLibvirtVirtualMachine")
+        case .consoleTimedOut:
+            return NSLocalizedString("Timed out connecting to the console. Check that the VM's SPICE port is reachable on the host.", comment: "UTMLibvirtVirtualMachine")
         }
     }
 }

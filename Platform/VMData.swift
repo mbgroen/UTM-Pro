@@ -384,8 +384,8 @@ extension VMData {
         }
         #endif
         #if WITH_REMOTE_KVM
-        if let libvirtConfig = config as? UTMLibvirtConfiguration {
-            return libvirtConfig.machine ?? libvirtConfig.architecture ?? unavailable
+        if let libvirtVM = wrapped as? UTMLibvirtVirtualMachine {
+            return libvirtVM.domainInfo.machine ?? libvirtVM.domainInfo.architecture ?? unavailable
         }
         #endif
         return unavailable
@@ -402,8 +402,8 @@ extension VMData {
         }
         #endif
         #if WITH_REMOTE_KVM
-        if let libvirtConfig = config as? UTMLibvirtConfiguration {
-            return libvirtConfig.architecture ?? unavailable
+        if let libvirtVM = wrapped as? UTMLibvirtVirtualMachine {
+            return libvirtVM.domainInfo.architecture ?? unavailable
         }
         #endif
         return unavailable
@@ -418,13 +418,6 @@ extension VMData {
         #if os(macOS)
         if let appleConfig = config as? UTMAppleConfiguration {
             return ByteCountFormatter.string(fromByteCount: Int64(appleConfig.system.memorySize) * bytesInMib, countStyle: .binary)
-        }
-        #endif
-        #if WITH_REMOTE_KVM
-        if let libvirtConfig = config as? UTMLibvirtConfiguration {
-            // libvirt reports bytes directly, unlike the local backends which
-            // store MiB.
-            return ByteCountFormatter.string(fromByteCount: Int64(libvirtConfig.memoryBytes), countStyle: .binary)
         }
         #endif
         return unavailable

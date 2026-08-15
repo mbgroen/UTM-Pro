@@ -125,10 +125,10 @@ struct VMContextMenuModifier: ViewModifier {
             Divider()
 
             Button {
-                perform { try await libvirtVM.setAutostart(!libvirtVM.config.isAutostart) }
+                perform { try await libvirtVM.setAutostart(!libvirtVM.domainInfo.isAutostart) }
             } label: {
-                Label(libvirtVM.config.isAutostart ? "Disable Autostart" : "Enable Autostart",
-                      systemImage: libvirtVM.config.isAutostart ? "bolt.slash" : "bolt")
+                Label(libvirtVM.domainInfo.isAutostart ? "Disable Autostart" : "Enable Autostart",
+                      systemImage: libvirtVM.domainInfo.isAutostart ? "bolt.slash" : "bolt")
             }.help("Whether the host starts this VM on boot.")
 
             Button {

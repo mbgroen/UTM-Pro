@@ -136,6 +136,6 @@ final class UTMLibvirtServerRegistry: ObservableObject {
     /// Finds the server that owns a VM, for views holding only the VM.
     func server(for vm: VMData) -> UTMLibvirtServer? {
         guard let wrapped = vm.wrapped as? UTMLibvirtVirtualMachine else { return nil }
-        return server(withId: wrapped.config.serverId)
+        return server(withId: wrapped.domainInfo.serverId)
     }
 }

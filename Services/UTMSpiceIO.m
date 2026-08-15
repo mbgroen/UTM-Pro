@@ -25,6 +25,7 @@ NSString *const kUTMErrorDomain = @"com.utmapp.utm";
 @property (nonatomic, nullable) NSURL *socketUrl;
 @property (nonatomic, nullable) NSString *host;
 @property (nonatomic) NSInteger tlsPort;
+@property (nonatomic) NSInteger port;
 @property (nonatomic, nullable) NSData *serverPublicKey;
 @property (nonatomic, nullable) NSString *password;
 @property (nonatomic) UTMSpiceIOOptions options;
@@ -89,13 +90,29 @@ NSString *const kUTMErrorDomain = @"com.utmapp.utm";
     return self;
 }
 
+- (instancetype)initWithHost:(NSString *)host port:(NSInteger)port password:(NSString *)password options:(UTMSpiceIOOptions)options {
+    if (self = [super init]) {
+        self.host = host;
+        self.port = port;
+        self.password = password;
+        self.options = options;
+        self.mutableDisplays = [NSMutableArray array];
+        self.mutableSerials = [NSMutableArray array];
+    }
+
+    return self;
+}
+
 - (void)initializeSpiceIfNeeded {
     if (!self.spiceConnection) {
         if (self.socketUrl) {
             NSURL *relativeSocketFile = [NSURL fileURLWithPath:self.socketUrl.lastPathComponent];
             self.spiceConnection = [[CSConnection alloc] initWithUnixSocketFile:relativeSocketFile];
-        } else {
+        } else if (self.tlsPort > 0) {
             self.spiceConnection = [[CSConnection alloc] initWithHost:self.host tlsPort:[@(self.tlsPort) stringValue] serverPublicKey:self.serverPublicKey];
+            self.spiceConnection.password = self.password;
+        } else {
+            self.spiceConnection = [[CSConnection alloc] initWithHost:self.host port:[@(self.port) stringValue]];
             self.spiceConnection.password = self.password;
         }
         self.spiceConnection.delegate = self;

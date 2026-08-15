@@ -191,7 +191,7 @@ final class UTMLibvirtServer: ObservableObject, Identifiable {
     /// unencrypted — which matters because these consoles routinely listen on
     /// every interface with no password.
     func consoleAddress(for vm: UTMLibvirtVirtualMachine) async throws -> (host: String, port: Int) {
-        guard let graphics = vm.config.preferredGraphics, let port = graphics.port else {
+        guard let graphics = vm.domainInfo.preferredGraphics, let port = graphics.port else {
             throw UTMLibvirtVirtualMachineError.noConsole
         }
         guard settings.tunnelConsole else {

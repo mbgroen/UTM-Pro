@@ -26,18 +26,7 @@ extension UTMData {
         // must be handled before the backend checks below — they would
         // otherwise reject an x86_64 guest simply because this Mac is arm64.
         if let libvirtVM = vm.wrapped as? UTMLibvirtVirtualMachine {
-            guard startImmediately else { return }
-            Task {
-                do {
-                    if libvirtVM.state == .paused {
-                        try await libvirtVM.resume()
-                    } else {
-                        try await libvirtVM.start(options: options)
-                    }
-                } catch {
-                    self.alertItem = .message(error.localizedDescription)
-                }
-            }
+            runRemote(vm: vm, libvirtVM: libvirtVM, options: options, startImmediately: startImmediately)
             return
         }
         #endif
@@ -97,6 +86,57 @@ extension UTMData {
         }
     }
     
+    #if WITH_REMOTE_KVM
+    /// Starts a remote domain and, if it has a console, shows it.
+    ///
+    /// The domain executes on its host, so nothing here launches a process.
+    /// The window is a SPICE client pointed at the host's console — reached
+    /// through the SSH tunnel when the server is configured to use one.
+    func runRemote(vm: VMData,
+                   libvirtVM: UTMLibvirtVirtualMachine,
+                   options: UTMVirtualMachineStartOptions,
+                   startImmediately: Bool) {
+        Task {
+            do {
+                if startImmediately {
+                    if libvirtVM.state == .paused {
+                        try await libvirtVM.resume()
+                    } else if libvirtVM.state == .stopped {
+                        try await libvirtVM.start(options: options)
+                    }
+                }
+
+                guard !libvirtVM.isHeadless else {
+                    // Nothing to display; starting it was the whole request.
+                    return
+                }
+
+                if let existing = vmWindows[vm] as? VMDisplayWindowController {
+                    existing.showWindow(nil)
+                    existing.window?.makeMain()
+                    return
+                }
+
+                // The console is only reachable once the domain is actually
+                // running, which start() has just waited for.
+                try await libvirtVM.connectConsole()
+
+                let window = VMDisplayQemuMetalWindowController(vm: libvirtVM, onClose: { [weak self] in
+                    guard let self = self else { return }
+                    self.vmWindows.removeValue(forKey: vm)
+                    Task { await libvirtVM.disconnectConsole() }
+                })
+                vmWindows[vm] = window
+                libvirtVM.delegate = window
+                window.showWindow(nil)
+                window.window?.makeMain()
+            } catch {
+                self.alertItem = .message(error.localizedDescription)
+            }
+        }
+    }
+    #endif
+
     /// Start a remote session and return SPICE server port.
     /// - Parameters:
     ///   - vm: VM to start
