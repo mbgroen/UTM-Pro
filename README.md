@@ -37,11 +37,16 @@ libvirt host rather than on your Mac. Remote VMs appear in the same sidebar as
 local ones, grouped under the server they belong to.
 
 * Manage libvirt/KVM hosts over SSH — no agent to install on the server
-* Start, stop, reset, pause and resume remote VMs
-* Snapshots for both local and remote VMs: list, create, restore and delete
-* Storage pool and volume management: capacity, create, resize, clone, delete
+* Remote VMs appear in the sidebar grouped under their server, with live state
+* Start, stop, reset, pause and resume; set autostart
 * Consoles tunnelled through the SSH connection, using UTM's existing SPICE
   display, input, clipboard and USB redirection
+* Edit a remote VM's memory, processors, name and notes — applied to the host
+* Add disks from a storage pool, or attach a volume that already exists
+* Create new VMs, with an installer ISO picked from a pool
+* Storage management: pools with capacity, and volumes to create, resize,
+  duplicate and delete
+* Snapshots for both local **and** remote VMs: list, create, restore, delete
 
 ### Requirements
 
@@ -70,6 +75,20 @@ sounds: libvirt hosts commonly expose SPICE and VNC on `0.0.0.0` with no
 password, so anyone who can reach the host can open a console. Tunnelling keeps
 that traffic on the SSH connection. You can turn it off per server if the
 console port is already protected.
+
+VMs created by UTM Pro listen on the host's loopback only, for the same reason.
+
+A console window is just a viewer. Closing it disconnects and leaves the VM
+running — unlike a local VM, where the window owns the process.
+
+### Snapshots
+
+Snapshots now work for local VMs too, including while they are stopped —
+previously UTM only kept a single implicit suspend snapshot, and deleting one
+with the VM off silently did nothing.
+
+Whether a snapshot captured memory is shown in the list, because it decides
+what restoring does: resume mid-execution, or boot from that point.
 
 ## UTM SE
 
