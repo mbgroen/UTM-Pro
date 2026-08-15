@@ -148,6 +148,18 @@ do {
         try await WriteTest.run(libvirt: libvirt, domain: target, pool: pool)
     }
 
+    // One-shot hardware setter, for putting a VM back to known values.
+    if let target = environment["LIBVIRT_SET_DOMAIN"] {
+        if let vcpus = environment["LIBVIRT_SET_VCPUS"].flatMap(Int.init) {
+            try await libvirt.setVCPUs(ofDomain: target, count: vcpus)
+            print("set \(target) to \(vcpus) vcpu")
+        }
+        if let mib = environment["LIBVIRT_SET_MEMORY_MIB"].flatMap(UInt64.init) {
+            try await libvirt.setMemory(ofDomain: target, bytes: mib * 1024 * 1024)
+            print("set \(target) to \(mib) MiB")
+        }
+    }
+
     // Checks the SSH tunnel the console depends on, without opening a console.
     if let target = environment["LIBVIRT_TUNNEL_TEST_DOMAIN"] {
         try await TunnelTest.run(connection: connection, libvirt: libvirt, domain: target)

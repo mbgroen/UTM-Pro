@@ -34,6 +34,8 @@ enum WriteTest {
         try await snapshotLifecycle(libvirt: libvirt, domain: domain)
         try await volumeLifecycle(libvirt: libvirt, pool: pool)
         try await autostartToggle(libvirt: libvirt, domain: domain)
+        try await hardwareEdits(libvirt: libvirt, domain: domain)
+        try await diskAttachment(libvirt: libvirt, domain: domain, pool: pool)
 
         print("\n  all write tests passed, nothing left behind")
     }
@@ -154,6 +156,101 @@ enum WriteTest {
             throw TestFailure("autostart was not restored to \(original)")
         }
         print("  restored to \(restored) ✓")
+    }
+}
+
+// MARK: - Hardware edits
+
+extension WriteTest {
+    /// Exercises the write-back path the settings view uses, and puts every
+    /// value back where it found it.
+    fileprivate static func hardwareEdits(libvirt: LibvirtHost, domain name: String) async throws {
+        let original = try await libvirt.domain(named: name)
+        let originalMib = original.memoryBytes / (1024 * 1024)
+        print("\n  hardware: \(original.vcpuCount) vcpu, \(originalMib) MiB, "
+              + "description \((original.notes ?? "").debugDescription)")
+
+        let newVCPUs = original.vcpuCount == 1 ? 2 : 1
+        let newMib = originalMib == 2048 ? UInt64(1024) : UInt64(2048)
+
+        print("  setting \(newVCPUs) vcpu and \(newMib) MiB …")
+        try await libvirt.setVCPUs(ofDomain: name, count: newVCPUs)
+        try await libvirt.setMemory(ofDomain: name, bytes: newMib * 1024 * 1024)
+
+        let changed = try await libvirt.domain(named: name)
+        guard changed.vcpuCount == newVCPUs else {
+            throw TestFailure("expected \(newVCPUs) vcpu, got \(changed.vcpuCount)")
+        }
+        let changedMib = changed.memoryBytes / (1024 * 1024)
+        guard changedMib == newMib else {
+            throw TestFailure("expected \(newMib) MiB, got \(changedMib)")
+        }
+        print("  applied: \(changed.vcpuCount) vcpu, \(changedMib) MiB ✓")
+
+        let marker = "UTM Pro verification"
+        try await libvirt.setDescription(ofDomain: name, text: marker)
+        let described = try await libvirt.domain(named: name)
+        guard described.notes == marker else {
+            throw TestFailure("description not applied, got \((described.notes ?? "").debugDescription)")
+        }
+        print("  description applied ✓")
+
+        print("  restoring …")
+        try await libvirt.setVCPUs(ofDomain: name, count: original.vcpuCount)
+        try await libvirt.setMemory(ofDomain: name, bytes: original.memoryBytes)
+        try await libvirt.setDescription(ofDomain: name, text: original.notes ?? "")
+
+        let restored = try await libvirt.domain(named: name)
+        guard restored.vcpuCount == original.vcpuCount,
+              restored.memoryBytes / (1024 * 1024) == originalMib,
+              (restored.notes ?? "") == (original.notes ?? "") else {
+            throw TestFailure("hardware was not restored to its original values")
+        }
+        print("  restored: \(restored.vcpuCount) vcpu, "
+              + "\(restored.memoryBytes / (1024 * 1024)) MiB ✓")
+    }
+
+    /// Creates a volume, attaches it, detaches it and removes it.
+    fileprivate static func diskAttachment(libvirt: LibvirtHost, domain name: String, pool: String) async throws {
+        let volumeName = "utmpro-verify-attach.qcow2"
+        let before = try await libvirt.domain(named: name)
+        let originalTargets = before.disks.map(\.target)
+        print("\n  disks: \(originalTargets.joined(separator: ", "))")
+
+        try await libvirt.createVolume(named: volumeName,
+                                       inPool: pool,
+                                       capacityBytes: 64 * 1024 * 1024,
+                                       format: .qcow2)
+        let volumes = try await libvirt.listVolumes(inPool: pool)
+        guard let volume = volumes.first(where: { $0.name == volumeName }) else {
+            throw TestFailure("volume was not created")
+        }
+
+        let target = LibvirtHost.nextTargetDevice(after: originalTargets)
+        print("  attaching as \(target) …")
+        try await libvirt.attachDisk(toDomain: name,
+                                     volumePath: volume.path,
+                                     targetDevice: target,
+                                     format: .qcow2)
+
+        let attached = try await libvirt.domain(named: name)
+        guard attached.disks.contains(where: { $0.target == target }) else {
+            throw TestFailure("disk \(target) was not attached")
+        }
+        print("  attached: \(attached.disks.map(\.target).joined(separator: ", ")) ✓")
+
+        print("  detaching …")
+        try await libvirt.detachDisk(fromDomain: name, targetDevice: target)
+        let detached = try await libvirt.domain(named: name)
+        guard !detached.disks.contains(where: { $0.target == target }) else {
+            throw TestFailure("disk \(target) is still attached")
+        }
+        guard detached.disks.map(\.target) == originalTargets else {
+            throw TestFailure("disk list did not return to its original state")
+        }
+
+        try await libvirt.deleteVolume(named: volumeName, inPool: pool)
+        print("  detached and volume removed ✓")
     }
 }
 

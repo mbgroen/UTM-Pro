@@ -189,8 +189,84 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
         registryEntry.name = config.information.name
     }
 
+    /// Applies configuration changes to the domain on its host.
+    ///
+    /// There is no package to write; "saving" a remote VM means reconciling
+    /// the edited projection against libvirt. Only fields that were actually
+    /// changed are sent, so saving an untouched VM costs nothing and cannot
+    /// disturb settings this projection does not model.
+    ///
+    /// UTM only enables editing while a VM is stopped, which is also what
+    /// libvirt requires for most of these.
     func save() async throws {
-        // There is no local package to write.
+        let host = try server.libvirt
+        let original = domainInfo
+
+        if config.system.memorySize != original.memorySizeMib {
+            let bytes = UInt64(max(1, config.system.memorySize)) * 1024 * 1024
+            try await host.setMemory(ofDomain: original.domainName, bytes: bytes)
+        }
+
+        if config.system.cpuCount != original.vcpuCount {
+            try await host.setVCPUs(ofDomain: original.domainName, count: config.system.cpuCount)
+        }
+
+        let notes = config.information.notes ?? ""
+        if notes != (original.notes ?? "") {
+            try await host.setDescription(ofDomain: original.domainName, text: notes)
+        }
+
+        // Renaming last: everything above addresses the domain by its old
+        // name, and libvirt has no transaction to roll back into.
+        let newName = config.information.name
+        if newName != original.domainName, !newName.isEmpty {
+            try await host.rename(domain: original.domainName, to: newName)
+        }
+
+        let refreshed = try await host.domain(named: newName.isEmpty ? original.domainName : newName)
+        update(from: refreshed)
+    }
+
+    // MARK: - Disks
+
+    /// Creates a volume in a pool and attaches it to this domain.
+    func addDisk(named name: String,
+                 inPool poolName: String,
+                 capacityBytes: UInt64,
+                 format: LibvirtVolumeFormat) async throws {
+        let host = try server.libvirt
+        try await host.createVolume(named: name,
+                                    inPool: poolName,
+                                    capacityBytes: capacityBytes,
+                                    format: format)
+        let volumes = try await host.listVolumes(inPool: poolName)
+        guard let created = volumes.first(where: { $0.name == name }) else {
+            throw UTMLibvirtVirtualMachineError.volumeNotFoundAfterCreate(name)
+        }
+        try await attachDisk(at: created.path, format: format, isCDROM: false)
+    }
+
+    /// Attaches a volume that already exists on the host.
+    func attachDisk(at path: String,
+                    format: LibvirtVolumeFormat,
+                    isCDROM: Bool) async throws {
+        let host = try server.libvirt
+        let target = LibvirtHost.nextTargetDevice(after: domainInfo.diskTargets, isCDROM: isCDROM)
+        try await host.attachDisk(toDomain: domainName,
+                                  volumePath: path,
+                                  targetDevice: target,
+                                  format: format,
+                                  isCDROM: isCDROM)
+        let refreshed = try await host.domain(named: domainName)
+        update(from: refreshed)
+    }
+
+    /// Detaches a disk. The image is left on the host.
+    func removeDisk(targetDevice: String) async throws {
+        let host = try server.libvirt
+        try await host.detachDisk(fromDomain: domainName, targetDevice: targetDevice)
+        let refreshed = try await host.domain(named: domainName)
+        update(from: refreshed)
     }
 
     // MARK: - Lifecycle
@@ -465,6 +541,7 @@ enum UTMLibvirtVirtualMachineError: Error {
     case consoleFailed(String)
     case notSupportedRemotely
     case consoleTimedOut
+    case volumeNotFoundAfterCreate(String)
 }
 
 extension UTMLibvirtVirtualMachineError: LocalizedError {
@@ -486,6 +563,8 @@ extension UTMLibvirtVirtualMachineError: LocalizedError {
             return NSLocalizedString("This is not supported for virtual machines on a remote host.", comment: "UTMLibvirtVirtualMachine")
         case .consoleTimedOut:
             return NSLocalizedString("Timed out connecting to the console. Check that the VM's SPICE port is reachable on the host.", comment: "UTMLibvirtVirtualMachine")
+        case .volumeNotFoundAfterCreate(let name):
+            return String(format: NSLocalizedString("Created the disk '%@' but the host did not list it afterwards, so it was not attached.", comment: "UTMLibvirtVirtualMachine"), name)
         }
     }
 }

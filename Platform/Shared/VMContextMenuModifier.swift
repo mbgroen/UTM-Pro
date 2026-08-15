@@ -20,6 +20,9 @@ struct VMContextMenuModifier: ViewModifier {
     @ObservedObject var vm: VMData
     @EnvironmentObject private var data: UTMData
     @State private var showSharePopup = false
+    #if WITH_REMOTE_KVM
+    @State private var showAddDisk = false
+    #endif
     @State private var confirmAction: ConfirmAction?
     @State private var shareItem: VMShareItemModifier.ShareItem?
     
@@ -125,6 +128,16 @@ struct VMContextMenuModifier: ViewModifier {
             Divider()
 
             Button {
+                showAddDisk = true
+            } label: {
+                Label("Add Disk…", systemImage: "internaldrive")
+            }
+            .disabled(libvirtVM.state != .stopped)
+            .help("Create a disk in a storage pool on the host, or attach one that already exists.")
+
+            Divider()
+
+            Button {
                 perform { try await libvirtVM.setAutostart(!libvirtVM.domainInfo.isAutostart) }
             } label: {
                 Label(libvirtVM.domainInfo.isAutostart ? "Disable Autostart" : "Enable Autostart",
@@ -136,6 +149,11 @@ struct VMContextMenuModifier: ViewModifier {
             } label: {
                 Label("Refresh", systemImage: "arrow.triangle.2.circlepath")
             }.help("Re-read this VM's state from the host.")
+        }
+        .sheet(isPresented: $showAddDisk) {
+            if #available(iOS 16, macOS 13, *), let server = data.libvirtServers.server(for: vm) {
+                VMLibvirtDiskAddView(server: server, vm: libvirtVM)
+            }
         }
     }
 

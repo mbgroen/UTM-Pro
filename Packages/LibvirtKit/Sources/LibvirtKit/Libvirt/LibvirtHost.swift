@@ -317,6 +317,129 @@ public actor LibvirtHost {
         }
     }
 
+    // MARK: - Changing a domain's hardware
+
+    /// Sets a domain's memory.
+    ///
+    /// Applies to the persistent configuration, so it takes effect on next
+    /// boot. Both the maximum and the current allocation are set: raising only
+    /// the maximum leaves the guest still booting with the old amount.
+    ///
+    /// - Note: the domain must be shut off. libvirt refuses to lower the
+    ///   maximum of a running domain.
+    public func setMemory(ofDomain name: String, bytes: UInt64) async throws {
+        // libvirt takes KiB here unless a suffix is given.
+        let kibibytes = max(UInt64(1), bytes / 1024)
+        try await virshChecked {
+            $0.flag("setmaxmem")
+            $0.argument(name)
+            $0.argument(kibibytes)
+            $0.flag("--config")
+        }
+        try await virshChecked {
+            $0.flag("setmem")
+            $0.argument(name)
+            $0.argument(kibibytes)
+            $0.flag("--config")
+        }
+    }
+
+    /// Sets a domain's virtual CPU count.
+    ///
+    /// The maximum has to move first: libvirt rejects a current count above
+    /// the configured maximum.
+    public func setVCPUs(ofDomain name: String, count: Int) async throws {
+        let count = max(1, count)
+        try await virshChecked {
+            $0.flag("setvcpus")
+            $0.argument(name)
+            $0.argument(count)
+            $0.flag("--config")
+            $0.flag("--maximum")
+        }
+        try await virshChecked {
+            $0.flag("setvcpus")
+            $0.argument(name)
+            $0.argument(count)
+            $0.flag("--config")
+        }
+    }
+
+    /// Sets a domain's description.
+    ///
+    /// Persistent configuration only. Adding `--live` would fail outright on a
+    /// stopped domain, which is exactly when UTM allows editing.
+    public func setDescription(ofDomain name: String, text: String) async throws {
+        try await virshChecked {
+            $0.flag("desc")
+            $0.argument(name)
+            $0.flag("--config")
+            $0.argument(text)
+        }
+    }
+
+    /// Renames a domain. Only valid while it is shut off.
+    public func rename(domain name: String, to newName: String) async throws {
+        try await virshChecked {
+            $0.flag("domrename")
+            $0.argument(name)
+            $0.argument(newName)
+        }
+    }
+
+    // MARK: - Disks
+
+    /// Attaches a disk image to a domain.
+    ///
+    /// Persistent so it survives a reboot. The caller picks the target device
+    /// name; `nextTargetDevice(after:)` produces one that does not collide.
+    public func attachDisk(toDomain name: String,
+                           volumePath: String,
+                           targetDevice: String,
+                           format: LibvirtVolumeFormat = .qcow2,
+                           isCDROM: Bool = false) async throws {
+        try await virshChecked {
+            $0.flag("attach-disk")
+            $0.argument(name)
+            $0.argument(volumePath)
+            $0.argument(targetDevice)
+            $0.option("--subdriver", format.rawValue)
+            $0.option("--targetbus", isCDROM ? "sata" : "virtio")
+            if isCDROM {
+                $0.option("--type", "cdrom")
+                $0.flag("--mode")
+                $0.argument("readonly")
+            }
+            $0.flag("--persistent")
+        }
+    }
+
+    /// Detaches a disk. The image itself is left on disk.
+    public func detachDisk(fromDomain name: String, targetDevice: String) async throws {
+        try await virshChecked {
+            $0.flag("detach-disk")
+            $0.argument(name)
+            $0.argument(targetDevice)
+            $0.flag("--persistent")
+        }
+    }
+
+    /// Produces a guest device name that does not collide with existing ones.
+    ///
+    /// virtio disks are `vda`, `vdb`, … and libvirt rejects a duplicate.
+    public nonisolated static func nextTargetDevice(after existing: [String],
+                                                    isCDROM: Bool = false) -> String {
+        let prefix = isCDROM ? "sd" : "vd"
+        let taken = Set(existing)
+        for letter in "abcdefghijklmnopqrstuvwxyz" {
+            let candidate = "\(prefix)\(letter)"
+            if !taken.contains(candidate) {
+                return candidate
+            }
+        }
+        return "\(prefix)z"
+    }
+
     // MARK: - Snapshots
 
     /// Lists a domain's snapshots, newest first.

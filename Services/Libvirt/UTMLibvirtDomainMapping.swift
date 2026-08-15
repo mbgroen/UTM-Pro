@@ -45,6 +45,17 @@ struct UTMLibvirtDomainInfo {
     /// Host paths of the domain's disks, indexed by guest device name.
     var diskPaths: [String: String]
 
+    /// Guest device names already in use, so a new disk gets a free one.
+    var diskTargets: [String]
+
+    /// Memory in MiB, matching how the projected configuration stores it, so
+    /// a save can tell an actual edit from a rounding difference.
+    var memorySizeMib: Int
+
+    var vcpuCount: Int
+
+    var notes: String?
+
     /// The server this domain belongs to.
     var serverId: UUID
 
@@ -57,6 +68,10 @@ struct UTMLibvirtDomainInfo {
         self.graphics = domain.graphics
         self.interfaces = domain.interfaces
         self.serverId = serverId
+        self.diskTargets = domain.disks.map(\.target).filter { !$0.isEmpty }
+        self.memorySizeMib = Int(domain.memoryBytes / (1024 * 1024))
+        self.vcpuCount = domain.vcpuCount
+        self.notes = domain.notes
         self.diskPaths = domain.disks.reduce(into: [:]) { result, disk in
             if let path = disk.sourcePath {
                 result[disk.target] = path
