@@ -402,8 +402,26 @@ extension VMDisplayWindowController: NSWindowDelegate {
         return proposedOptions.union([.autoHideToolbar])
     }
     
+    /// True when this window only views a VM that runs somewhere else.
+    ///
+    /// A local VM's window owns the process behind it, so closing it has to
+    /// deal with the VM's state. A remote domain outlives this app entirely:
+    /// the window is a console, and closing a console must never touch the VM.
+    var isDetachableConsole: Bool {
+        #if WITH_REMOTE_KVM
+        return vm is UTMLibvirtVirtualMachine
+        #else
+        return false
+        #endif
+    }
+
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         guard !isSecondary else {
+            return true
+        }
+        guard !isDetachableConsole else {
+            // Nothing to save and nothing to warn about: the VM keeps running
+            // on its host either way.
             return true
         }
         guard !(vm.state == .stopped || (vm.state == .paused && vm.registryEntry.isSuspended)) else {
@@ -466,7 +484,9 @@ extension VMDisplayWindowController: NSWindowDelegate {
     }
     
     func windowWillClose(_ notification: Notification) {
-        if !isSecondary {
+        // Killing the VM here would destroy a domain running on someone
+        // else's machine simply because a window was closed.
+        if !isSecondary && !isDetachableConsole {
             self.vm.requestVmStop(force: true)
         }
         secondaryWindows.forEach { secondaryWindow in
