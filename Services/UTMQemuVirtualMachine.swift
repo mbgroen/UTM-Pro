@@ -593,6 +593,17 @@ extension UTMQemuVirtualMachine {
     }
     
     func saveSnapshot(name: String? = nil) async throws {
+        // A stopped VM has no memory to capture, but its disk can still hold
+        // a snapshot, and that is a perfectly reasonable thing to want before
+        // making a change.
+        if state == .stopped, let name = name, let url = await snapshotImageURL {
+            if let snapshotUnsupportedError = snapshotUnsupportedError {
+                throw UTMQemuVirtualMachineError.saveSnapshotFailed(snapshotUnsupportedError)
+            }
+            try await UTMQemuImage.snapshotOperation(.create, named: name, image: url)
+            try? updateLastModified()
+            return
+        }
         guard state == .paused || state == .started else {
             throw UTMQemuVirtualMachineError.invalidVmState
         }
@@ -615,12 +626,48 @@ extension UTMQemuVirtualMachine {
         }
     }
     
+    /// The image internal snapshots live in.
+    ///
+    /// QEMU stores them in one qcow2 disk, so a VM with several drives still
+    /// has a single place its snapshots are kept.
+    @MainActor var snapshotImageURL: URL? {
+        config.drives.first {
+            $0.imageType == .disk && !$0.isRawImage && !$0.isExternal && $0.imageURL != nil
+        }?.imageURL
+    }
+
+    /// Lists the VM's snapshots.
+    ///
+    /// Read from the disk image rather than the monitor, which can save,
+    /// restore and delete but cannot enumerate. That also means this works
+    /// while the VM is stopped, which is when people most often want to see
+    /// what they can go back to.
+    func listSnapshots() async throws -> [UTMVirtualMachineSnapshot] {
+        guard let url = await snapshotImageURL else {
+            return []
+        }
+        let snapshots = try await UTMQemuImage.snapshots(image: url)
+        return snapshots.map { snapshot in
+            UTMVirtualMachineSnapshot(name: snapshot.name,
+                                      creationDate: snapshot.creationDate,
+                                      isCurrent: false,
+                                      includesMemory: snapshot.includesMemory,
+                                      notes: nil)
+        }
+        .sorted { ($0.creationDate ?? .distantPast) > ($1.creationDate ?? .distantPast) }
+    }
+
     private func _deleteSnapshot(name: String) async throws {
         if let monitor = await monitor { // if QEMU is running
             let result = try await monitor.qemuDeleteSnapshot(name)
             if result.localizedCaseInsensitiveContains("Error") {
                 throw UTMQemuVirtualMachineError.qemuError(result)
             }
+            try? updateLastModified()
+        } else if let url = await snapshotImageURL {
+            // Without this the request silently did nothing when the VM was
+            // off, leaving snapshots that appeared deleted and were not.
+            try await UTMQemuImage.snapshotOperation(.delete, named: name, image: url)
             try? updateLastModified()
         }
     }
@@ -667,6 +714,20 @@ extension UTMQemuVirtualMachine {
     }
     
     func restoreSnapshot(name: String? = nil) async throws {
+        // Applying to the image while stopped rolls the disk back; the VM
+        // then boots from that point rather than resuming into it.
+        if state == .stopped, let name = name, let url = await snapshotImageURL {
+            state = .restoring
+            do {
+                try await UTMQemuImage.snapshotOperation(.apply, named: name, image: url)
+                try? updateLastModified()
+                state = .stopped
+            } catch {
+                state = .stopped
+                throw error
+            }
+            return
+        }
         guard state == .paused || state == .started else {
             throw UTMQemuVirtualMachineError.invalidVmState
         }

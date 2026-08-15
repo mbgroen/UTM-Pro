@@ -20,6 +20,7 @@ struct VMContextMenuModifier: ViewModifier {
     @ObservedObject var vm: VMData
     @EnvironmentObject private var data: UTMData
     @State private var showSharePopup = false
+    @State private var showSnapshots = false
     #if WITH_REMOTE_KVM
     @State private var showAddDisk = false
     #endif
@@ -128,6 +129,13 @@ struct VMContextMenuModifier: ViewModifier {
             Divider()
 
             Button {
+                showSnapshots = true
+            } label: {
+                Label("Snapshots…", systemImage: "camera.on.rectangle")
+            }
+            .help("List, create, restore and delete this VM's snapshots.")
+
+            Button {
                 showAddDisk = true
             } label: {
                 Label("Add Disk…", systemImage: "internaldrive")
@@ -155,6 +163,7 @@ struct VMContextMenuModifier: ViewModifier {
                 VMLibvirtDiskAddView(server: server, vm: libvirtVM)
             }
         }
+        .modifier(VMSnapshotsSheetModifier(vm: vm, isPresented: $showSnapshots))
     }
 
     /// Runs a host operation and surfaces any failure as an alert, rather than
@@ -241,6 +250,14 @@ struct VMContextMenuModifier: ViewModifier {
                 
                 Divider()
             }
+            if vm.wrapped is UTMQemuVirtualMachine {
+                Button {
+                    showSnapshots = true
+                } label: {
+                    Label("Snapshots…", systemImage: "camera.on.rectangle")
+                }.help("List, create, restore and delete this VM's snapshots.")
+                Divider()
+            }
             #if !WITH_REMOTE // FIXME: implement remote feature
             Button {
                 shareItem = .utmCopy(vm)
@@ -288,6 +305,7 @@ struct VMContextMenuModifier: ViewModifier {
             }
             #endif
         }
+        .modifier(VMSnapshotsSheetModifier(vm: vm, isPresented: $showSnapshots))
         .modifier(VMShareItemModifier(isPresented: $showSharePopup, shareItem: shareItem))
         .modifier(VMConfirmActionModifier(confirmAction: $confirmAction) { action in
             if case .confirmMoveVM(let vm) = action {
