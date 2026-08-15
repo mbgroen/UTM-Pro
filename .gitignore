@@ -71,3 +71,7 @@ build*/
 sysroot*/
 .DS_Store
 CodeSigning.xcconfig
+
+# Swift package build products
+Packages/*/.build/
+Packages/*/.swiftpm/
