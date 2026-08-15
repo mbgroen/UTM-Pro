@@ -228,4 +228,85 @@ final class UTMLibvirtServer: ObservableObject, Identifiable {
     func refreshPools() async throws {
         pools = try await libvirt.listPools()
     }
+
+    /// Creates a directory-backed pool and starts it.
+    func createPool(named name: String, targetPath: String) async throws {
+        try await libvirt.createDirectoryPool(named: name, targetPath: targetPath)
+        try await refreshPools()
+    }
+
+    func startPool(named name: String) async throws {
+        try await libvirt.startPool(named: name)
+        try await refreshPools()
+    }
+
+    func stopPool(named name: String) async throws {
+        try await libvirt.stopPool(named: name)
+        try await refreshPools()
+    }
+
+    func setPoolAutostart(_ enabled: Bool, forPool name: String) async throws {
+        try await libvirt.setPoolAutostart(enabled, forPool: name)
+        try await refreshPools()
+    }
+
+    /// Re-reads a pool's contents from disk.
+    ///
+    /// Needed whenever something writes into the pool directory behind
+    /// libvirt's back — an ISO copied in over SMB, for instance.
+    func rescanPool(named name: String) async throws {
+        try await libvirt.refreshPool(named: name)
+        try await refreshPools()
+    }
+
+    /// Removes a pool's definition. The volumes on disk are untouched.
+    func undefinePool(named name: String) async throws {
+        try await libvirt.undefinePool(named: name)
+        try await refreshPools()
+    }
+
+    // MARK: - Volumes
+
+    func createVolume(named name: String,
+                      inPool poolName: String,
+                      capacityBytes: UInt64,
+                      format: LibvirtVolumeFormat) async throws {
+        try await libvirt.createVolume(named: name,
+                                       inPool: poolName,
+                                       capacityBytes: capacityBytes,
+                                       format: format)
+        try await refreshPools()
+    }
+
+    func resizeVolume(named name: String,
+                      inPool poolName: String,
+                      toBytes bytes: UInt64,
+                      allowShrink: Bool) async throws {
+        try await libvirt.resizeVolume(named: name,
+                                       inPool: poolName,
+                                       toBytes: bytes,
+                                       allowShrink: allowShrink)
+        try await refreshPools()
+    }
+
+    func cloneVolume(named name: String, inPool poolName: String, toName newName: String) async throws {
+        try await libvirt.cloneVolume(named: name, inPool: poolName, toName: newName)
+        try await refreshPools()
+    }
+
+    func deleteVolume(named name: String, inPool poolName: String) async throws {
+        try await libvirt.deleteVolume(named: name, inPool: poolName)
+        try await refreshPools()
+    }
+
+    /// Names of domains currently using a given image path.
+    ///
+    /// Deleting a volume another VM is booting from destroys that VM, and
+    /// libvirt will not stop you, so the UI needs to be able to say so.
+    func domainsUsing(volumePath path: String) -> [String] {
+        virtualMachines.compactMap { data in
+            guard let vm = data.wrapped as? UTMLibvirtVirtualMachine else { return nil }
+            return vm.domainInfo.diskPaths.values.contains(path) ? vm.domainName : nil
+        }
+    }
 }

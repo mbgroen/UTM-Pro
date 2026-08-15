@@ -40,6 +40,7 @@ struct VMLibvirtServerSection: View {
     @EnvironmentObject private var data: UTMData
     @State private var isExpanded: Bool = true
     @State private var confirmRemove: Bool = false
+    @State private var showStorage: Bool = false
 
     var body: some View {
         Section(header: header) {
@@ -75,6 +76,9 @@ struct VMLibvirtServerSection: View {
                 hostKeyPrompt(fingerprint: fingerprint, isChange: isChange)
             }
         }
+        .sheet(isPresented: $showStorage) {
+            VMLibvirtStorageView(server: server)
+        }
         .confirmationDialog("Remove this server?",
                             isPresented: $confirmRemove,
                             titleVisibility: .visible) {
@@ -98,6 +102,11 @@ struct VMLibvirtServerSection: View {
                         Task { await server.refresh() }
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    Button {
+                        showStorage = true
+                    } label: {
+                        Label("Storage…", systemImage: "externaldrive")
                     }
                     Button {
                         Task { await server.disconnect() }
