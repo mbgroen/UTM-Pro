@@ -130,6 +130,16 @@ struct VMContextMenuModifier: ViewModifier {
 
             Divider()
 
+            #if os(macOS)
+            Button {
+                data.openRemoteSerialConsole(vm: vm, libvirtVM: libvirtVM)
+            } label: {
+                Label("Serial Console…", systemImage: "terminal")
+            }
+            .disabled(libvirtVM.state != .started)
+            .help("Attach to the VM's serial console over SSH.")
+            #endif
+
             Button {
                 showSnapshots = true
             } label: {

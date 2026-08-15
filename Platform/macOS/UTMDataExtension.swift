@@ -107,7 +107,9 @@ extension UTMData {
                 }
 
                 guard !libvirtVM.isHeadless else {
-                    // Nothing to display; starting it was the whole request.
+                    // No graphics at all, so the serial console is the only
+                    // view there is — and the one a server VM actually wants.
+                    self.openRemoteSerialConsole(vm: vm, libvirtVM: libvirtVM)
                     return
                 }
 
@@ -134,6 +136,25 @@ extension UTMData {
                 self.alertItem = .message(error.localizedDescription)
             }
         }
+    }
+    #endif
+
+    #if WITH_REMOTE_KVM
+    /// Opens a serial console window for a remote domain.
+    func openRemoteSerialConsole(vm: VMData, libvirtVM: UTMLibvirtVirtualMachine) {
+        if let existing = vmWindows[vm] as? VMDisplayWindowController {
+            existing.showWindow(nil)
+            existing.window?.makeMain()
+            return
+        }
+        guard #available(macOS 12, *) else { return }
+        let window = VMDisplayLibvirtTerminalWindowController(vm: libvirtVM, onClose: { [weak self] in
+            self?.vmWindows.removeValue(forKey: vm)
+        })
+        vmWindows[vm] = window
+        libvirtVM.delegate = window
+        window.showWindow(nil)
+        window.window?.makeMain()
     }
     #endif
 

@@ -477,6 +477,21 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
         changeCursorRequestInProgress = false
     }
 
+    /// Opens the domain's serial console.
+    ///
+    /// Runs `virsh console` on the host over its own SSH channel. The serial
+    /// port is a pty on the host, which SPICE does not carry, so this is the
+    /// only way to reach a VM that has no graphics.
+    func openSerialConsole(onOutput: @escaping @Sendable (Data) -> Void,
+                           onClose: @escaping @Sendable () -> Void) async throws -> SSHShellSession {
+        guard state == .started || state == .paused else {
+            throw UTMLibvirtVirtualMachineError.notRunning
+        }
+        return try await server.openSerialConsole(forDomain: domainName,
+                                                  onOutput: onOutput,
+                                                  onClose: onClose)
+    }
+
     // MARK: - Unsupported on a remote domain
 
     /// Changing media means rewriting the domain's XML on the host, which is

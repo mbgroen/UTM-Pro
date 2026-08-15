@@ -215,6 +215,27 @@ final class UTMLibvirtServer: ObservableObject, Identifiable {
         return ("127.0.0.1", localPort)
     }
 
+    /// Starts `virsh console` for a domain on this host.
+    ///
+    /// `--force` takes the console even when another client is already
+    /// attached. Without it, a session someone forgot to close on the NAS
+    /// blocks every later attempt with an error that does not explain itself.
+    func openSerialConsole(forDomain name: String,
+                           onOutput: @escaping @Sendable (Data) -> Void,
+                           onClose: @escaping @Sendable () -> Void) async throws -> SSHShellSession {
+        guard let connection else {
+            throw UTMLibvirtServerError.notConnected
+        }
+        var command = ShellCommand("virsh")
+        command.option("--connect", settings.uri)
+        command.flag("console")
+        command.argument(name)
+        command.flag("--force")
+        return try await connection.openShell(command: command.commandLine,
+                                              onOutput: onOutput,
+                                              onClose: onClose)
+    }
+
     /// Closes a console tunnel once its session ends.
     func closeConsole(for vm: UTMLibvirtVirtualMachine) async {
         guard let localPort = consoleTunnels.removeValue(forKey: vm.domainName),

@@ -67,6 +67,12 @@ public actor SSHConnection {
         channel?.isActive ?? false
     }
 
+    /// The transport channel, for extensions that open their own child
+    /// channels on this connection.
+    var sshChannel: Channel? {
+        channel
+    }
+
     public init(destination: SSHDestination, group: EventLoopGroup? = nil) {
         self.destination = destination
         if let group {
