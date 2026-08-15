@@ -23,12 +23,23 @@ struct VMSettingsView<Config: UTMConfiguration>: View {
     
     @EnvironmentObject private var data: UTMData
     @Environment(\.presentationMode) private var presentationMode: Binding<PresentationMode>
+
+    /// True when the VM runs on another machine, so controls that act on local
+    /// files have nothing to act on.
+    private var isRemoteVM: Bool {
+        #if WITH_REMOTE_KVM
+        return vm.wrapped is UTMLibvirtVirtualMachine
+        #else
+        return false
+        #endif
+    }
     
     var body: some View {
         NavigationView {
             List {
                 if config is UTMQemuConfiguration {
-                    VMQEMUSettingsView(config: config as! UTMQemuConfiguration)
+                    VMQEMUSettingsView(config: config as! UTMQemuConfiguration,
+                                       isRemote: isRemoteVM)
                 } else if config is UTMAppleConfiguration {
                     VMAppleSettingsView(config: config as! UTMAppleConfiguration)
                 }

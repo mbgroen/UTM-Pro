@@ -167,6 +167,9 @@ enum UTMLibvirtServerError: Error {
     case notConnected
     case hostKeyNotTrusted(fingerprint: String)
     case volumeMissingAfterCreate(String)
+    case cloneRequiresStoppedVM
+    case cloneHasNoDisk
+    case poolPathUnknown(String)
 }
 
 extension UTMLibvirtServerError: LocalizedError {
@@ -180,6 +183,12 @@ extension UTMLibvirtServerError: LocalizedError {
             return String(format: NSLocalizedString("The server presented host key %@, which has not been trusted yet.", comment: "UTMLibvirtServer"), fingerprint)
         case .volumeMissingAfterCreate(let name):
             return String(format: NSLocalizedString("The disk '%@' was created but the host did not list it afterwards, so the virtual machine was not defined.", comment: "UTMLibvirtServer"), name)
+        case .cloneRequiresStoppedVM:
+            return NSLocalizedString("Stop the virtual machine before duplicating it. Copying a disk that is being written to produces a corrupt copy.", comment: "UTMLibvirtServer")
+        case .cloneHasNoDisk:
+            return NSLocalizedString("This virtual machine has no disk to copy.", comment: "UTMLibvirtServer")
+        case .poolPathUnknown(let name):
+            return String(format: NSLocalizedString("Could not determine where the pool '%@' stores its files.", comment: "UTMLibvirtServer"), name)
         }
     }
 }

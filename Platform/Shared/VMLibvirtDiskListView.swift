@@ -244,3 +244,88 @@ struct VMLibvirtDeleteView: View {
         }
     }
 }
+
+/// Duplicates a remote VM, copying its disks.
+@available(iOS 16, macOS 13, *)
+struct VMLibvirtCloneView: View {
+    @ObservedObject var server: UTMLibvirtServer
+    let vm: UTMLibvirtVirtualMachine
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var newName: String
+    @State private var poolName: String = ""
+    @State private var errorMessage: String?
+    @State private var isWorking = false
+
+    init(server: UTMLibvirtServer, vm: UTMLibvirtVirtualMachine) {
+        self.server = server
+        self.vm = vm
+        _newName = State(initialValue: "\(vm.domainName)-copy")
+    }
+
+    private var pools: [LibvirtPool] { server.pools.filter(\.isActive) }
+
+    private var nameTaken: Bool {
+        server.virtualMachines.contains { $0.detailsTitleLabel == newName.trimmingCharacters(in: .whitespaces) }
+    }
+
+    var body: some View {
+        VMLibvirtSheet(title: "Duplicate \(vm.domainName)",
+                       confirmTitle: "Duplicate",
+                       isConfirmEnabled: !newName.trimmingCharacters(in: .whitespaces).isEmpty
+                           && !poolName.isEmpty && !nameTaken && !isWorking,
+                       errorMessage: errorMessage,
+                       onConfirm: clone) {
+            TextField("Name", text: $newName)
+                #if !os(macOS)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                #endif
+            if nameTaken {
+                Text("A VM with this name already exists on this host.")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            }
+            Picker("Disks Into", selection: $poolName) {
+                ForEach(pools) { pool in
+                    Text(pool.name).tag(pool.name)
+                }
+            }
+            // Said plainly because the alternative — sharing the image — is
+            // what people expect "clone" to mean and would quietly corrupt
+            // both VMs.
+            Text("The disks are copied, not shared, so the copy is independent. For a large disk this takes a while and the pool needs room for another full image.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if vm.state != .stopped {
+                Label("Stop the VM first. Copying a disk while it is being written produces a corrupt copy.",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .task {
+            if poolName.isEmpty {
+                poolName = pools.first?.name ?? ""
+            }
+        }
+    }
+
+    private func clone() {
+        isWorking = true
+        errorMessage = nil
+        Task {
+            do {
+                try await server.cloneVirtualMachine(vm,
+                                                     toName: newName.trimmingCharacters(in: .whitespaces),
+                                                     inPool: poolName)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
+        }
+    }
+}

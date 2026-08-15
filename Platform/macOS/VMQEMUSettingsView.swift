@@ -18,6 +18,10 @@ import SwiftUI
 
 struct VMQEMUSettingsView: View {
     @ObservedObject var config: UTMQemuConfiguration
+
+    /// Passed down so drive controls that create local files are replaced by a
+    /// pointer to the ones that work for a remote host.
+    var isRemote: Bool = false
     @EnvironmentObject private var data: UTMData
 
     @State private var infoActive: Bool = true
@@ -169,7 +173,9 @@ struct VMQEMUSettingsView: View {
             VMSettingsAddDeviceMenuView(config: config)
         }
         Section(header: Text("Drives")) {
-            VMDrivesSettingsView(drives: $config.drives, template: UTMQemuConfigurationDrive(forArchitecture: config.system.architecture, target: config.system.target))
+            VMDrivesSettingsView(drives: $config.drives,
+                                 template: UTMQemuConfigurationDrive(forArchitecture: config.system.architecture, target: config.system.target),
+                                 isRemote: isRemote)
         }
     }
 

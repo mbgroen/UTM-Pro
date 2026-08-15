@@ -20,15 +20,23 @@ struct VMDrivesSettingsView<Drive: UTMConfigurationDrive>: View {
     @Binding var drives: [Drive]
     let template: Drive
     @State var newDrive: Drive
+
+    /// Set for a VM whose disks live on another machine.
+    ///
+    /// The controls below create and import files on this Mac, which a remote
+    /// domain cannot see. Rather than offer them and quietly do nothing, the
+    /// section says where the working controls are.
+    var isRemote: Bool = false
     @EnvironmentObject private var data: UTMData
     @State private var newDrivePopover: Bool = false
     @State private var importDrivePresented: Bool = false
     @State private var requestDriveDelete: Drive?
     
-    init(drives: Binding<[Drive]>, template: Drive) {
+    init(drives: Binding<[Drive]>, template: Drive, isRemote: Bool = false) {
         self._drives = drives
         self._newDrive = State<Drive>(initialValue: template)
         self.template = template
+        self.isRemote = isRemote
     }
 
     var body: some View {
@@ -73,6 +81,13 @@ struct VMDrivesSettingsView<Drive: UTMConfigurationDrive>: View {
                 drives.removeAll(where: { $0 == drive })
             }, secondaryButton: .cancel())
         }
+        if isRemote {
+            Label("Disks for this VM live on its host. Use Disks… from the VM's context menu to add one from a storage pool.",
+                  systemImage: "info.circle")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
         Button {
             newDrivePopover.toggle()
         } label: {
@@ -110,6 +125,7 @@ struct VMDrivesSettingsView<Drive: UTMConfigurationDrive>: View {
                     }).help("Create an empty drive.")
                 }
             }.padding()
+        }
         }
     }
     

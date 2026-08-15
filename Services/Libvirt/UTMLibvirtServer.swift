@@ -369,6 +369,94 @@ final class UTMLibvirtServer: ObservableObject, Identifiable {
         await refresh()
     }
 
+    /// Duplicates a domain, giving the copy its own disks.
+    ///
+    /// The disks are copied rather than shared. Two domains booting the same
+    /// image corrupt it, and libvirt will not stop you defining that — so a
+    /// "clone" that shared storage would be a trap rather than a shortcut.
+    func cloneVirtualMachine(_ vm: UTMLibvirtVirtualMachine,
+                             toName newName: String,
+                             inPool poolName: String) async throws {
+        let host = try libvirt
+        guard vm.state == .stopped else {
+            throw UTMLibvirtServerError.cloneRequiresStoppedVM
+        }
+
+        var copiedVolumes: [String] = []
+        do {
+            // Copy each disk into the target pool under the new VM's name.
+            var diskPaths: [String] = []
+            for (index, target) in vm.domainInfo.diskTargets.sorted().enumerated() {
+                guard let sourcePath = vm.domainInfo.diskPaths[target] else { continue }
+                let ext = (sourcePath as NSString).pathExtension
+                let suffix = index == 0 ? "" : "-\(target)"
+                let volumeName = ext.isEmpty ? "\(newName)\(suffix)" : "\(newName)\(suffix).\(ext)"
+                let directory = try await poolPath(named: poolName, host: host)
+                let destination = (directory as NSString).appendingPathComponent(volumeName)
+                try await host.convertVolume(at: sourcePath,
+                                             toPath: destination,
+                                             format: ext == "raw" ? .raw : .qcow2,
+                                             inPool: poolName)
+                copiedVolumes.append(volumeName)
+                diskPaths.append(destination)
+            }
+            guard let bootDisk = diskPaths.first else {
+                throw UTMLibvirtServerError.cloneHasNoDisk
+            }
+
+            let template = LibvirtDomainTemplate(
+                name: newName,
+                notes: vm.config.information.notes,
+                architecture: vm.domainInfo.architecture ?? "x86_64",
+                machine: vm.domainInfo.machine ?? "q35",
+                memoryBytes: UInt64(max(1, vm.config.system.memorySize)) * 1024 * 1024,
+                vcpuCount: vm.config.system.cpuCount,
+                diskPath: bootDisk,
+                network: networkTemplate(from: vm)
+            )
+            try await host.define(domainXML: template.domainXML())
+
+            // Any disk beyond the first is attached separately.
+            for (index, path) in diskPaths.enumerated() where index > 0 {
+                let target = LibvirtHost.nextTargetDevice(
+                    after: (0..<index).map { LibvirtHost.nextTargetDevice(after: Array(repeating: "", count: $0)) }
+                )
+                try await host.attachDisk(toDomain: newName,
+                                          volumePath: path,
+                                          targetDevice: target)
+            }
+        } catch {
+            // Copies of a multi-gigabyte disk are not something to leave lying
+            // around after a failure.
+            for volumeName in copiedVolumes {
+                try? await host.deleteVolume(named: volumeName, inPool: poolName)
+            }
+            throw error
+        }
+
+        await refresh()
+        try? await refreshPools()
+    }
+
+    private func poolPath(named name: String, host: LibvirtHost) async throws -> String {
+        if let pool = pools.first(where: { $0.name == name }), let path = pool.targetPath {
+            return path
+        }
+        let refreshed = try await host.listPools()
+        guard let path = refreshed.first(where: { $0.name == name })?.targetPath else {
+            throw UTMLibvirtServerError.poolPathUnknown(name)
+        }
+        return path
+    }
+
+    /// Reuses the source VM's network attachment, with a fresh MAC.
+    private func networkTemplate(from vm: UTMLibvirtVirtualMachine) -> LibvirtDomainTemplate.Network {
+        guard let interface = vm.domainInfo.interfaces.first, let source = interface.source else {
+            return .none
+        }
+        return interface.kind == "network" ? .virtualNetwork(source) : .bridge(source)
+    }
+
     /// Removes a domain's definition.
     ///
     /// - Parameter removeStorage: also delete the domain's disk images. Off by

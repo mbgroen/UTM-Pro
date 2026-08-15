@@ -24,6 +24,7 @@ struct VMContextMenuModifier: ViewModifier {
     #if WITH_REMOTE_KVM
     @State private var showAddDisk = false
     @State private var showDeleteRemote = false
+    @State private var showCloneRemote = false
     #endif
     @State private var confirmAction: ConfirmAction?
     @State private var shareItem: VMShareItemModifier.ShareItem?
@@ -158,6 +159,14 @@ struct VMContextMenuModifier: ViewModifier {
                 Label("Refresh", systemImage: "arrow.triangle.2.circlepath")
             }.help("Re-read this VM's state from the host.")
 
+            Button {
+                showCloneRemote = true
+            } label: {
+                Label("Duplicate…", systemImage: "doc.on.doc")
+            }
+            .disabled(libvirtVM.state != .stopped)
+            .help("Copy this VM and its disks into a storage pool.")
+
             Divider()
 
             DestructiveButton {
@@ -174,6 +183,11 @@ struct VMContextMenuModifier: ViewModifier {
         .sheet(isPresented: $showDeleteRemote) {
             if #available(iOS 16, macOS 13, *), let server = data.libvirtServers.server(for: vm) {
                 VMLibvirtDeleteView(server: server, vm: libvirtVM)
+            }
+        }
+        .sheet(isPresented: $showCloneRemote) {
+            if #available(iOS 16, macOS 13, *), let server = data.libvirtServers.server(for: vm) {
+                VMLibvirtCloneView(server: server, vm: libvirtVM)
             }
         }
         .modifier(VMSnapshotsSheetModifier(vm: vm, isPresented: $showSnapshots))
