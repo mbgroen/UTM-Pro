@@ -47,6 +47,8 @@ local ones, grouped under the server they belong to.
 * Storage management: pools with capacity, and volumes to create, resize,
   duplicate and delete
 * Snapshots for both local **and** remote VMs: list, create, restore, delete
+* Serial console over SSH for VMs with no graphics
+* Duplicate and delete remote VMs, with or without their disks
 
 ### Requirements
 
@@ -80,6 +82,12 @@ VMs created by UTM Pro listen on the host's loopback only, for the same reason.
 
 A console window is just a viewer. Closing it disconnects and leaves the VM
 running — unlike a local VM, where the window owns the process.
+
+### Serial consoles
+
+A VM with no graphics has no SPICE console to show. Its serial port is a pty on
+the host, so UTM Pro runs `virsh console` over the SSH connection and pipes it
+into a terminal. Starting a headless remote VM opens this automatically.
 
 ### Snapshots
 
