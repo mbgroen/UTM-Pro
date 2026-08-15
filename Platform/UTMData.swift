@@ -109,6 +109,14 @@ enum AlertItem: Identifiable {
         UTMData.defaultStorageUrl
     }
 
+    #if WITH_REMOTE_KVM
+    /// Configured remote libvirt hosts
+    ///
+    /// Deliberately separate from `virtualMachines`, which stays local-only so
+    /// every existing operation on that list keeps its meaning.
+    let libvirtServers: UTMLibvirtServerRegistry = UTMLibvirtServerRegistry()
+    #endif
+
     #if WITH_SERVER
     /// Remote access server
     private(set) var remoteServer: UTMRemoteServer!

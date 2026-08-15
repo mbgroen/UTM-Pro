@@ -44,6 +44,8 @@ enum UTMBackend: String, CaseIterable, Codable {
     case unknown = "Unknown"
     case apple = "Apple"
     case qemu = "QEMU"
+    /// A domain on a remote libvirt host. Never written to a `.utm` package.
+    case libvirt = "Libvirt"
 }
 
 enum UTMConfigurationError: Error {

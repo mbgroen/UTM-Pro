@@ -277,15 +277,57 @@ extension UTMVirtualMachine {
 
 // MARK: - Snapshots
 
+/// One snapshot of a virtual machine, from whichever backend holds it.
+///
+/// Backends disagree on what else they record, so this carries only what every
+/// one of them can report and the UI actually shows.
+struct UTMVirtualMachineSnapshot: Identifiable, Hashable {
+    /// Unique within a VM, and the handle every operation takes.
+    let name: String
+
+    let creationDate: Date?
+
+    /// The snapshot the VM would revert to by default.
+    let isCurrent: Bool
+
+    /// True when the snapshot captured RAM as well as disk, so restoring
+    /// resumes execution instead of booting.
+    let includesMemory: Bool
+
+    let notes: String?
+
+    var id: String { name }
+
+    init(name: String,
+         creationDate: Date? = nil,
+         isCurrent: Bool = false,
+         includesMemory: Bool = false,
+         notes: String? = nil) {
+        self.name = name
+        self.creationDate = creationDate
+        self.isCurrent = isCurrent
+        self.includesMemory = includesMemory
+        self.notes = notes
+    }
+}
+
 extension UTMVirtualMachine {
+    /// Lists the VM's snapshots.
+    ///
+    /// Backends that cannot enumerate them return an empty list rather than
+    /// throwing, so a snapshot view can be shown for any VM.
+    func listSnapshots() async throws -> [UTMVirtualMachineSnapshot] {
+        []
+    }
+
     func saveSnapshot(name: String?) async throws {
         throw UTMVirtualMachineError.notImplemented
     }
-    
+
     func deleteSnapshot(name: String?) async throws {
         throw UTMVirtualMachineError.notImplemented
     }
-    
+
     func restoreSnapshot(name: String?) async throws {
         throw UTMVirtualMachineError.notImplemented
     }

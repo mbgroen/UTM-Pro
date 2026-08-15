@@ -7,17 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01F440EA9BDFACFC65DF9AA1 /* LibvirtKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1F0041BCA4AA94AA534A5DD7 /* LibvirtKit */; };
 		03FA9C722B9BBDB000C53A5A /* UTMConfigurationHostNetwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03FA9C712B9BBDB000C53A5A /* UTMConfigurationHostNetwork.swift */; };
 		03FA9C732B9BBDB000C53A5A /* UTMConfigurationHostNetwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03FA9C712B9BBDB000C53A5A /* UTMConfigurationHostNetwork.swift */; };
 		03FA9C742B9BBDB000C53A5A /* UTMConfigurationHostNetwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03FA9C712B9BBDB000C53A5A /* UTMConfigurationHostNetwork.swift */; };
 		03FA9C752B9BBDB000C53A5A /* UTMConfigurationHostNetwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03FA9C712B9BBDB000C53A5A /* UTMConfigurationHostNetwork.swift */; };
+		0FE245CCB7959100D8E4A424 /* UTMLibvirtConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47784015A0A6DEA7A650111D /* UTMLibvirtConfiguration.swift */; };
+		197E4C09A183C4A03435B5B8 /* UTMLibvirtVirtualMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9164F81BD5E36959DE63224 /* UTMLibvirtVirtualMachine.swift */; };
+		26354F2B9B1F4CD76385C1B2 /* UTMLibvirtConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47784015A0A6DEA7A650111D /* UTMLibvirtConfiguration.swift */; };
+		283B400B89F07A7670B7B639 /* UTMLibvirtServerRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779843E7A82B8A66EA13114A /* UTMLibvirtServerRegistry.swift */; };
 		2C33B3A92566C9B100A954A6 /* VMContextMenuModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C33B3A82566C9B100A954A6 /* VMContextMenuModifier.swift */; };
 		2C33B3AA2566C9B100A954A6 /* VMContextMenuModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C33B3A82566C9B100A954A6 /* VMContextMenuModifier.swift */; };
 		2C6D9E03256EE454003298E6 /* VMDisplayQemuTerminalWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6D9E02256EE454003298E6 /* VMDisplayQemuTerminalWindowController.swift */; };
 		4B224B9D279D4D8100B63CFF /* InListButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B224B9C279D4D8100B63CFF /* InListButtonStyle.swift */; };
 		4B224B9E279D4D8100B63CFF /* InListButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B224B9C279D4D8100B63CFF /* InListButtonStyle.swift */; };
 		4B224B9F279D4D8100B63CFF /* InListButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B224B9C279D4D8100B63CFF /* InListButtonStyle.swift */; };
+		53684763B2263BD4DF8B6E04 /* VMLibvirtServerSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018C43E9828D4EFE82003165 /* VMLibvirtServerSheetModifier.swift */; };
 		53A0BDD726D79FE40010EDC5 /* SavePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53A0BDD426D79FE40010EDC5 /* SavePanel.swift */; };
+		5C894E478F798FFE09B2B91A /* UTMLibvirtServerSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A55447AA3E3610CEA731C92 /* UTMLibvirtServerSettings.swift */; };
+		69774DEABF9CD9854751C66F /* UTMLibvirtVirtualMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9164F81BD5E36959DE63224 /* UTMLibvirtVirtualMachine.swift */; };
+		76B9475A8013CA539243B318 /* UTMLibvirtServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E0347FF8AE313637BEB2A7E /* UTMLibvirtServer.swift */; };
+		7850491E9DA8BB3351E0CDDB /* UTMLibvirtServerRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779843E7A82B8A66EA13114A /* UTMLibvirtServerRegistry.swift */; };
+		7F664E1A9B1D7829B3FC8784 /* VMLibvirtServerSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5137465E8EE9769092E46743 /* VMLibvirtServerSection.swift */; };
 		83034C0726AB630F006B4BAF /* UTMPendingVMView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83034C0626AB630F006B4BAF /* UTMPendingVMView.swift */; };
 		83034C0826AB630F006B4BAF /* UTMPendingVMView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83034C0626AB630F006B4BAF /* UTMPendingVMView.swift */; };
 		83034C0926AB630F006B4BAF /* UTMPendingVMView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83034C0626AB630F006B4BAF /* UTMPendingVMView.swift */; };
@@ -280,8 +291,18 @@
 		85EC516427CC8D0F004A51DE /* VMConfigAdvancedNetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85EC516327CC8C98004A51DE /* VMConfigAdvancedNetworkView.swift */; };
 		85EC516527CC8D0F004A51DE /* VMConfigAdvancedNetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85EC516327CC8C98004A51DE /* VMConfigAdvancedNetworkView.swift */; };
 		85EC516627CC8D10004A51DE /* VMConfigAdvancedNetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85EC516327CC8C98004A51DE /* VMConfigAdvancedNetworkView.swift */; };
+		89F3419D970990E2A13E7D06 /* UTMLibvirtServerSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A55447AA3E3610CEA731C92 /* UTMLibvirtServerSettings.swift */; };
+		91574E08B7FE908A349A0222 /* VMLibvirtServerSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018C43E9828D4EFE82003165 /* VMLibvirtServerSheetModifier.swift */; };
+		A890417A90D717D823FF9EC8 /* VMLibvirtServerSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018C43E9828D4EFE82003165 /* VMLibvirtServerSheetModifier.swift */; };
+		A8984051825B7198710780D6 /* VMLibvirtServerSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5137465E8EE9769092E46743 /* VMLibvirtServerSection.swift */; };
 		B329049C270FE136002707AC /* AltKit in Frameworks */ = {isa = PBXBuildFile; productRef = B329049B270FE136002707AC /* AltKit */; };
 		B3DDF57226E9BBA300CE47F0 /* AltKit in Frameworks */ = {isa = PBXBuildFile; productRef = B3DDF57126E9BBA300CE47F0 /* AltKit */; };
+		B6344F8392F2D711025BF6D0 /* UTMLibvirtConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47784015A0A6DEA7A650111D /* UTMLibvirtConfiguration.swift */; };
+		B90E4C1BA46117D5CD1202F2 /* UTMLibvirtServerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E44C029A830EE1B56EB818 /* UTMLibvirtServerEditView.swift */; };
+		BF154D589AC3FE380808F8C5 /* VMLibvirtServerSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5137465E8EE9769092E46743 /* VMLibvirtServerSection.swift */; };
+		C01A40AD86B5894C4958CBE7 /* UTMLibvirtServerRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779843E7A82B8A66EA13114A /* UTMLibvirtServerRegistry.swift */; };
+		C7B04F01A88EDEFFB023474C /* UTMLibvirtServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E0347FF8AE313637BEB2A7E /* UTMLibvirtServer.swift */; };
+		CA2A4797A200A363F91A2C96 /* UTMLibvirtServerSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A55447AA3E3610CEA731C92 /* UTMLibvirtServerSettings.swift */; };
 		CD77BE422CAB51B40074ADD2 /* UTMScriptingExportCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD77BE412CAB519F0074ADD2 /* UTMScriptingExportCommand.swift */; };
 		CD77BE442CB38F060074ADD2 /* UTMScriptingImportCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD77BE432CB38F060074ADD2 /* UTMScriptingImportCommand.swift */; };
 		CD84C2092D3B446D00829850 /* UTMScriptingRegistryEntryImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD84C2082D3B446D00829850 /* UTMScriptingRegistryEntryImpl.swift */; };
@@ -1288,6 +1309,12 @@
 		CEFE96772B69A7CC000F00C9 /* VMRemoteSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFE96762B69A7CC000F00C9 /* VMRemoteSessionState.swift */; };
 		CEFE98DF29485237007CB7A8 /* UTM.sdef in Resources */ = {isa = PBXBuildFile; fileRef = CEFE98DE29485237007CB7A8 /* UTM.sdef */; };
 		CEFE98E129485776007CB7A8 /* UTMScriptingVirtualMachineImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFE98E029485776007CB7A8 /* UTMScriptingVirtualMachineImpl.swift */; };
+		D0764B82A115F4547917EF65 /* UTMLibvirtServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E0347FF8AE313637BEB2A7E /* UTMLibvirtServer.swift */; };
+		D3E9476189D21E3EAE4528FD /* LibvirtKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9DDF47F5BF2174E8AFE3E9AE /* LibvirtKit */; };
+		DA104E3188A8104101438462 /* LibvirtKit in Frameworks */ = {isa = PBXBuildFile; productRef = 15DA4E8990C2C9258F44B059 /* LibvirtKit */; };
+		DF484184943BD3202F6D72A7 /* UTMLibvirtServerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E44C029A830EE1B56EB818 /* UTMLibvirtServerEditView.swift */; };
+		EDB74C7ABF8D1F3628476023 /* UTMLibvirtServerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E44C029A830EE1B56EB818 /* UTMLibvirtServerEditView.swift */; };
+		F07346FC8E9DF5B143BCF755 /* UTMLibvirtVirtualMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9164F81BD5E36959DE63224 /* UTMLibvirtVirtualMachine.swift */; };
 		FF0307552A84E3B70049979B /* QEMULauncher-InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FF0307532A84E3B70049979B /* QEMULauncher-InfoPlist.strings */; };
 		FFB02A8C266CB09C006CD71A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FFB02A8A266CB09C006CD71A /* InfoPlist.strings */; };
 		FFB02A8D266CB09C006CD71A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FFB02A8A266CB09C006CD71A /* InfoPlist.strings */; };
@@ -1675,6 +1702,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		018C43E9828D4EFE82003165 /* VMLibvirtServerSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VMLibvirtServerSheetModifier.swift; path = Platform/Shared/VMLibvirtServerSheetModifier.swift; sourceTree = SOURCE_ROOT; };
+		02E44C029A830EE1B56EB818 /* UTMLibvirtServerEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UTMLibvirtServerEditView.swift; path = Platform/Shared/UTMLibvirtServerEditView.swift; sourceTree = SOURCE_ROOT; };
 		037DAA1C2B0B92580061ACB3 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/VMDisplayWindow.strings; sourceTree = "<group>"; };
 		037DAA1D2B0B92580061ACB3 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		037DAA1E2B0B92580061ACB3 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -1688,7 +1717,9 @@
 		45D72A942B94CE89000D16E9 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		45D72A952B94CEE0000D16E9 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		45D72A962B94CEF5000D16E9 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = "pl.lproj/Info-RemotePlist.strings"; sourceTree = "<group>"; };
+		47784015A0A6DEA7A650111D /* UTMLibvirtConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UTMLibvirtConfiguration.swift; path = Services/Libvirt/UTMLibvirtConfiguration.swift; sourceTree = SOURCE_ROOT; };
 		4B224B9C279D4D8100B63CFF /* InListButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InListButtonStyle.swift; sourceTree = "<group>"; };
+		5137465E8EE9769092E46743 /* VMLibvirtServerSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VMLibvirtServerSection.swift; path = Platform/Shared/VMLibvirtServerSection.swift; sourceTree = SOURCE_ROOT; };
 		521F3EFA2414F73800130500 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		5286EC8E2437488E007E6CBC /* VMDisplayMetalViewController+Gamepad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "VMDisplayMetalViewController+Gamepad.h"; sourceTree = "<group>"; };
 		5286EC8F2437488E007E6CBC /* VMDisplayMetalViewController+Gamepad.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "VMDisplayMetalViewController+Gamepad.m"; sourceTree = "<group>"; };
@@ -1711,6 +1742,8 @@
 		61EBDEA32AACA83100B959A2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = ru; path = ru.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		61EBDEA42AACA83100B959A2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		61EBDEA52AACA83100B959A2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		779843E7A82B8A66EA13114A /* UTMLibvirtServerRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UTMLibvirtServerRegistry.swift; path = Platform/UTMLibvirtServerRegistry.swift; sourceTree = SOURCE_ROOT; };
+		7E0347FF8AE313637BEB2A7E /* UTMLibvirtServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UTMLibvirtServer.swift; path = Services/Libvirt/UTMLibvirtServer.swift; sourceTree = SOURCE_ROOT; };
 		83034C0626AB630F006B4BAF /* UTMPendingVMView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTMPendingVMView.swift; sourceTree = "<group>"; };
 		835AA7B026AB7C85007A0411 /* UTMPendingVirtualMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTMPendingVirtualMachine.swift; sourceTree = "<group>"; };
 		836CA97E28FCC39700EB9EF0 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -1853,6 +1886,7 @@
 		84F746BA276FF70700A20C87 /* VMDisplayQemuDisplayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VMDisplayQemuDisplayController.swift; sourceTree = "<group>"; };
 		84F909FE289488F90008DBE2 /* MenuLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuLabel.swift; sourceTree = "<group>"; };
 		85EC516327CC8C98004A51DE /* VMConfigAdvancedNetworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VMConfigAdvancedNetworkView.swift; sourceTree = "<group>"; };
+		8A55447AA3E3610CEA731C92 /* UTMLibvirtServerSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UTMLibvirtServerSettings.swift; path = Services/Libvirt/UTMLibvirtServerSettings.swift; sourceTree = SOURCE_ROOT; };
 		9786BB59294056960032B858 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C03453AD2709E35100AD51AD /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		C03453AE2709E35100AD51AD /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
@@ -2185,6 +2219,7 @@
 		CEFE96762B69A7CC000F00C9 /* VMRemoteSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VMRemoteSessionState.swift; sourceTree = "<group>"; };
 		CEFE98DE29485237007CB7A8 /* UTM.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = UTM.sdef; sourceTree = "<group>"; };
 		CEFE98E029485776007CB7A8 /* UTMScriptingVirtualMachineImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTMScriptingVirtualMachineImpl.swift; sourceTree = "<group>"; };
+		D9164F81BD5E36959DE63224 /* UTMLibvirtVirtualMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UTMLibvirtVirtualMachine.swift; path = Services/Libvirt/UTMLibvirtVirtualMachine.swift; sourceTree = SOURCE_ROOT; };
 		E2D64BC7241DB24B0034E0C6 /* UTMSpiceIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UTMSpiceIO.h; sourceTree = "<group>"; };
 		E2D64BC8241DB24B0034E0C6 /* UTMSpiceIO.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UTMSpiceIO.m; sourceTree = "<group>"; };
 		E2D64BE0241EAEBE0034E0C6 /* UTMSpiceIODelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UTMSpiceIODelegate.h; sourceTree = "<group>"; };
@@ -2325,6 +2360,7 @@
 				CE2D936624AD46670059923A /* spice-server.1.framework in Frameworks */,
 				CE2D936724AD46670059923A /* pixman-1.0.framework in Frameworks */,
 				CEA9053D25F9824700801E7C /* usb-1.0.0.framework in Frameworks */,
+				01F440EA9BDFACFC65DF9AA1 /* LibvirtKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2402,6 +2438,7 @@
 				CE231D522BE03617006D6DC3 /* SwiftCopyfile in Frameworks */,
 				CE0B6EEA24AD677200FE012D /* libgstcoreelements.a in Frameworks */,
 				83993290272F4A400059355F /* ZIPFoundation in Frameworks */,
+				D3E9476189D21E3EAE4528FD /* LibvirtKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2489,6 +2526,7 @@
 				CEA45F5F263519B5002FA97D /* spice-server.1.framework in Frameworks */,
 				CEA45F60263519B5002FA97D /* pixman-1.0.framework in Frameworks */,
 				83993294272F685F0059355F /* ZIPFoundation in Frameworks */,
+				DA104E3188A8104101438462 /* LibvirtKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2577,6 +2615,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5DF14A29B71E2D4B9F4ABEEE /* Libvirt */ = {
+			isa = PBXGroup;
+			children = (
+				47784015A0A6DEA7A650111D /* UTMLibvirtConfiguration.swift */,
+				D9164F81BD5E36959DE63224 /* UTMLibvirtVirtualMachine.swift */,
+				7E0347FF8AE313637BEB2A7E /* UTMLibvirtServer.swift */,
+				8A55447AA3E3610CEA731C92 /* UTMLibvirtServerSettings.swift */,
+				779843E7A82B8A66EA13114A /* UTMLibvirtServerRegistry.swift */,
+				5137465E8EE9769092E46743 /* VMLibvirtServerSection.swift */,
+				018C43E9828D4EFE82003165 /* VMLibvirtServerSheetModifier.swift */,
+				02E44C029A830EE1B56EB818 /* UTMLibvirtServerEditView.swift */,
+			);
+			name = Libvirt;
+			sourceTree = "<group>";
+		};
 		841619A42843150E000034B2 /* Legacy */ = {
 			isa = PBXGroup;
 			children = (
@@ -2927,6 +2980,7 @@
 				CE88A0A12E23201100EAA28E /* Intents */,
 				CE550BCA225947990063E575 /* Products */,
 				CE2D63D622653C7300FC7E63 /* Frameworks */,
+				5DF14A29B71E2D4B9F4ABEEE /* Libvirt */,
 			);
 			sourceTree = "<group>";
 			usesTabs = 0;
@@ -3271,6 +3325,7 @@
 				CE9B15372B11A4A7003A32DD /* SwiftConnect */,
 				CE89CB0D2B8B1B5A006B2CC2 /* VisionKeyboardKit */,
 				CE231D532BE03630006D6DC3 /* SwiftCopyfile */,
+				1F0041BCA4AA94AA534A5DD7 /* LibvirtKit */,
 			);
 			productName = UTM;
 			productReference = CE2D93BE24AD46670059923A /* UTM.app */;
@@ -3306,6 +3361,7 @@
 				CE9B15352B11A491003A32DD /* SwiftConnect */,
 				CEDD11C02B7C74D7004DDAC6 /* SwiftPortmap */,
 				CE231D512BE03617006D6DC3 /* SwiftCopyfile */,
+				9DDF47F5BF2174E8AFE3E9AE /* LibvirtKit */,
 			);
 			productName = UTM;
 			productReference = CE2D951C24AD48BE0059923A /* UTM.app */;
@@ -3372,6 +3428,7 @@
 				CE9B15392B11A4AE003A32DD /* SwiftConnect */,
 				CE89CB0F2B8B1B6A006B2CC2 /* VisionKeyboardKit */,
 				CE231D552BE03636006D6DC3 /* SwiftCopyfile */,
+				15DA4E8990C2C9258F44B059 /* LibvirtKit */,
 			);
 			productName = UTM;
 			productReference = CEA45FB9263519B5002FA97D /* UTM SE.app */;
@@ -3461,7 +3518,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CE550BC4225947990063E575 /* Build configuration list for PBXProject "UTM" */;
+			buildConfigurationList = CE550BC4225947990063E575 /* Build configuration list for PBXProject "iOS" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -3498,6 +3555,7 @@
 				CEDD11BF2B7C74D7004DDAC6 /* XCRemoteSwiftPackageReference "SwiftPortmap" */,
 				CE89CB0C2B8B1B49006B2CC2 /* XCRemoteSwiftPackageReference "VisionKeyboardKit" */,
 				CE231D502BE03617006D6DC3 /* XCRemoteSwiftPackageReference "SwiftCopyfile" */,
+				49504840BCF45FBCBBE067A5 /* XCLocalSwiftPackageReference "Packages/LibvirtKit" */,
 			);
 			productRefGroup = CE550BCA225947990063E575 /* Products */;
 			projectDirPath = "";
@@ -3932,6 +3990,14 @@
 				CE88A1592E247D0100EAA28E /* UTMActionIntent.swift in Sources */,
 				841619A6284315C1000034B2 /* UTMQemuConfiguration.swift in Sources */,
 				CE88A1622E24B2B400EAA28E /* UTMInputIntent.swift in Sources */,
+				B6344F8392F2D711025BF6D0 /* UTMLibvirtConfiguration.swift in Sources */,
+				F07346FC8E9DF5B143BCF755 /* UTMLibvirtVirtualMachine.swift in Sources */,
+				76B9475A8013CA539243B318 /* UTMLibvirtServer.swift in Sources */,
+				89F3419D970990E2A13E7D06 /* UTMLibvirtServerSettings.swift in Sources */,
+				C01A40AD86B5894C4958CBE7 /* UTMLibvirtServerRegistry.swift in Sources */,
+				A8984051825B7198710780D6 /* VMLibvirtServerSection.swift in Sources */,
+				A890417A90D717D823FF9EC8 /* VMLibvirtServerSheetModifier.swift in Sources */,
+				DF484184943BD3202F6D72A7 /* UTMLibvirtServerEditView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4141,6 +4207,14 @@
 				84C4D9042880CA8A00EC3B2B /* VMSettingsAddDeviceMenuView.swift in Sources */,
 				CE88A1562E247CCE00EAA28E /* UTMIntent.swift in Sources */,
 				CEBE820526A4C1B5007AAB12 /* VMWizardDrivesView.swift in Sources */,
+				26354F2B9B1F4CD76385C1B2 /* UTMLibvirtConfiguration.swift in Sources */,
+				69774DEABF9CD9854751C66F /* UTMLibvirtVirtualMachine.swift in Sources */,
+				D0764B82A115F4547917EF65 /* UTMLibvirtServer.swift in Sources */,
+				5C894E478F798FFE09B2B91A /* UTMLibvirtServerSettings.swift in Sources */,
+				283B400B89F07A7670B7B639 /* UTMLibvirtServerRegistry.swift in Sources */,
+				BF154D589AC3FE380808F8C5 /* VMLibvirtServerSection.swift in Sources */,
+				91574E08B7FE908A349A0222 /* VMLibvirtServerSheetModifier.swift in Sources */,
+				EDB74C7ABF8D1F3628476023 /* UTMLibvirtServerEditView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4322,6 +4396,14 @@
 				8471772927CD3CAB00D3A50B /* DetailedSection.swift in Sources */,
 				841E58D62893D01B00137A20 /* UTMApp.swift in Sources */,
 				84909A9227CADAE0005605F1 /* UTMUnavailableVMView.swift in Sources */,
+				0FE245CCB7959100D8E4A424 /* UTMLibvirtConfiguration.swift in Sources */,
+				197E4C09A183C4A03435B5B8 /* UTMLibvirtVirtualMachine.swift in Sources */,
+				C7B04F01A88EDEFFB023474C /* UTMLibvirtServer.swift in Sources */,
+				CA2A4797A200A363F91A2C96 /* UTMLibvirtServerSettings.swift in Sources */,
+				7850491E9DA8BB3351E0CDDB /* UTMLibvirtServerRegistry.swift in Sources */,
+				7F664E1A9B1D7829B3FC8784 /* VMLibvirtServerSection.swift in Sources */,
+				53684763B2263BD4DF8B6E04 /* VMLibvirtServerSheetModifier.swift in Sources */,
+				B90E4C1BA46117D5CD1202F2 /* UTMLibvirtServerEditView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4837,7 +4919,10 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WITH_JIT WITH_SOLO_VM WITH_USB WITH_LOCATION_BACKGROUND $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = (
+					"WITH_JIT WITH_SOLO_VM WITH_USB WITH_LOCATION_BACKGROUND $(inherited)",
+					WITH_REMOTE_KVM,
+				);
 				SWIFT_OBJC_BRIDGING_HEADER = "Services/Swift-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -4875,7 +4960,10 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WITH_JIT WITH_SOLO_VM WITH_USB WITH_LOCATION_BACKGROUND $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = (
+					"WITH_JIT WITH_SOLO_VM WITH_USB WITH_LOCATION_BACKGROUND $(inherited)",
+					WITH_REMOTE_KVM,
+				);
 				SWIFT_OBJC_BRIDGING_HEADER = "Services/Swift-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
@@ -4910,7 +4998,10 @@
 				PRODUCT_NAME = "$(PROJECT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "$(PROVISIONING_PROFILE_SPECIFIER_MAC:default=)";
 				SUPPORTED_PLATFORMS = macosx;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WITH_JIT WITH_SERVER WITH_USB $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = (
+					"WITH_JIT WITH_SERVER WITH_USB $(inherited)",
+					WITH_REMOTE_KVM,
+				);
 				SWIFT_OBJC_BRIDGING_HEADER = "Services/Swift-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -4945,7 +5036,10 @@
 				PRODUCT_NAME = "$(PROJECT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "$(PROVISIONING_PROFILE_SPECIFIER_MAC:default=)";
 				SUPPORTED_PLATFORMS = macosx;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WITH_JIT WITH_SERVER WITH_USB $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = (
+					"WITH_JIT WITH_SERVER WITH_USB $(inherited)",
+					WITH_REMOTE_KVM,
+				);
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OBJC_BRIDGING_HEADER = "Services/Swift-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -5249,7 +5343,10 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WITH_QEMU_TCI WITH_SOLO_VM $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = (
+					"WITH_QEMU_TCI WITH_SOLO_VM $(inherited)",
+					WITH_REMOTE_KVM,
+				);
 				SWIFT_OBJC_BRIDGING_HEADER = "Services/Swift-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -5288,7 +5385,10 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WITH_QEMU_TCI WITH_SOLO_VM $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = (
+					"WITH_QEMU_TCI WITH_SOLO_VM $(inherited)",
+					WITH_REMOTE_KVM,
+				);
 				SWIFT_OBJC_BRIDGING_HEADER = "Services/Swift-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
@@ -5447,7 +5547,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CE550BC4225947990063E575 /* Build configuration list for PBXProject "UTM" */ = {
+		CE550BC4225947990063E575 /* Build configuration list for PBXProject "iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE550BDD2259479D0063E575 /* Debug */,
@@ -5502,6 +5602,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		49504840BCF45FBCBBE067A5 /* XCLocalSwiftPackageReference "Packages/LibvirtKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/LibvirtKit;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		8399328E272F4A400059355F /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
@@ -5683,6 +5790,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		15DA4E8990C2C9258F44B059 /* LibvirtKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49504840BCF45FBCBBE067A5 /* XCLocalSwiftPackageReference "Packages/LibvirtKit" */;
+			productName = LibvirtKit;
+		};
+		1F0041BCA4AA94AA534A5DD7 /* LibvirtKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49504840BCF45FBCBBE067A5 /* XCLocalSwiftPackageReference "Packages/LibvirtKit" */;
+			productName = LibvirtKit;
+		};
 		8399328F272F4A400059355F /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8399328E272F4A400059355F /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
@@ -5777,6 +5894,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 848F71E4277A2466006A0240 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
 			productName = SwiftTerm;
+		};
+		9DDF47F5BF2174E8AFE3E9AE /* LibvirtKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49504840BCF45FBCBBE067A5 /* XCLocalSwiftPackageReference "Packages/LibvirtKit" */;
+			productName = LibvirtKit;
 		};
 		B329049B270FE136002707AC /* AltKit */ = {
 			isa = XCSwiftPackageProductDependency;

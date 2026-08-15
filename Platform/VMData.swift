@@ -371,9 +371,14 @@ extension VMData {
             return appleConfig.system.boot.operatingSystem.rawValue
         }
         #endif
+        #if WITH_REMOTE_KVM
+        if let libvirtConfig = config as? UTMLibvirtConfiguration {
+            return libvirtConfig.machine ?? libvirtConfig.architecture ?? unavailable
+        }
+        #endif
         return unavailable
     }
-    
+
     /// Display VM architecture for UI elements
     var detailsSystemArchitectureLabel: String {
         if let qemuConfig = config as? UTMQemuConfiguration {
@@ -384,9 +389,14 @@ extension VMData {
             return appleConfig.system.architecture
         }
         #endif
+        #if WITH_REMOTE_KVM
+        if let libvirtConfig = config as? UTMLibvirtConfiguration {
+            return libvirtConfig.architecture ?? unavailable
+        }
+        #endif
         return unavailable
     }
-    
+
     /// Display RAM (formatted) for UI elements
     var detailsSystemMemoryLabel: String {
         let bytesInMib = Int64(1048576)
@@ -398,8 +408,22 @@ extension VMData {
             return ByteCountFormatter.string(fromByteCount: Int64(appleConfig.system.memorySize) * bytesInMib, countStyle: .binary)
         }
         #endif
+        #if WITH_REMOTE_KVM
+        if let libvirtConfig = config as? UTMLibvirtConfiguration {
+            // libvirt reports bytes directly, unlike the local backends which
+            // store MiB.
+            return ByteCountFormatter.string(fromByteCount: Int64(libvirtConfig.memoryBytes), countStyle: .binary)
+        }
+        #endif
         return unavailable
     }
+
+    #if WITH_REMOTE_KVM
+    /// True when this VM lives on a remote libvirt host.
+    var isRemoteLibvirt: Bool {
+        wrapped is UTMLibvirtVirtualMachine
+    }
+    #endif
     
     /// Display current VM state as a string for UI elements
     var stateLabel: String {

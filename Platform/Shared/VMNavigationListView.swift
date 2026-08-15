@@ -20,6 +20,9 @@ import TipKit
 struct VMNavigationListView: View {
     @EnvironmentObject private var data: UTMData
     @State private var confirmAction: ConfirmAction?
+    #if WITH_REMOTE_KVM
+    @State private var editingServer: UTMLibvirtServerSettings?
+    #endif
 
     var body: some View {
         if #available(iOS 16, macOS 13, *) {
@@ -27,6 +30,9 @@ struct VMNavigationListView: View {
                 List(selection: $data.selectedVM) {
                     listBody
                 }.modifier(VMListModifier())
+                #if WITH_REMOTE_KVM
+                .modifier(VMLibvirtServerSheetCompatModifier(editingServer: $editingServer))
+                #endif
             } detail: {
                 if let vm = data.selectedVM {
                     VMDetailsView(vm: vm)
@@ -44,12 +50,40 @@ struct VMNavigationListView: View {
                 List {
                     listBody
                 }.modifier(VMListModifier())
+                #if WITH_REMOTE_KVM
+                .modifier(VMLibvirtServerSheetCompatModifier(editingServer: $editingServer))
+                #endif
                 VMPlaceholderView()
             }
         }
     }
     
     @ViewBuilder private var listBody: some View {
+        #if WITH_REMOTE_KVM
+        // Remote server management needs SwiftUI features newer than UTM's
+        // minimum, so older systems keep the original single-list sidebar.
+        if #available(iOS 16, macOS 13, *) {
+            // Local VMs only get a header once there is something to
+            // distinguish them from. With no servers configured the list looks
+            // exactly as it always has.
+            if data.libvirtServers.servers.isEmpty {
+                localListBody
+            } else {
+                Section(header: Text("This Mac")) {
+                    localListBody
+                }
+            }
+            VMLibvirtServerSections(registry: data.libvirtServers,
+                                    editingServer: $editingServer)
+        } else {
+            localListBody
+        }
+        #else
+        localListBody
+        #endif
+    }
+
+    @ViewBuilder private var localListBody: some View {
         ForEach(data.virtualMachines) { vm in
             if !vm.isLoaded {
                 UTMUnavailableVMView(vm: vm)
