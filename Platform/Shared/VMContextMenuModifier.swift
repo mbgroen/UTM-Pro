@@ -145,7 +145,7 @@ struct VMContextMenuModifier: ViewModifier {
             }.help("Whether the host starts this VM on boot.")
 
             Button {
-                perform { try await libvirtVM.refreshState() }
+                perform { try await libvirtVM.refreshDomain() }
             } label: {
                 Label("Refresh", systemImage: "arrow.triangle.2.circlepath")
             }.help("Re-read this VM's state from the host.")

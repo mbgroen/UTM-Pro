@@ -114,6 +114,33 @@ import QEMUKitInternal
         let format : String
         let actualSize : Int64
         let dirtyFlag : Bool
+        /// Absent for images that hold none, and for raw images entirely.
+        let snapshots : [Snapshot]?
+
+        /// One internal snapshot inside a QCOW2 image.
+        struct Snapshot: Codable, Hashable {
+            let id: String
+            let name: String
+            /// Bytes of saved RAM. Zero means the snapshot captured only the
+            /// disk, so restoring it boots rather than resumes.
+            let vmStateSize: Int64?
+            let dateSec: TimeInterval?
+
+            var creationDate: Date? {
+                dateSec.map { Date(timeIntervalSince1970: $0) }
+            }
+
+            var includesMemory: Bool {
+                (vmStateSize ?? 0) > 0
+            }
+
+            private enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case vmStateSize = "vm-state-size"
+                case dateSec = "date-sec"
+            }
+        }
 
         private enum CodingKeys: String, CodingKey {
             case virtualSize = "virtual-size"
@@ -122,6 +149,7 @@ import QEMUKitInternal
             case format
             case actualSize = "actual-size"
             case dirtyFlag = "dirty-flag"
+            case snapshots
         }
     }
 
@@ -145,6 +173,69 @@ import QEMUKitInternal
         let image_info: QemuImageInfo = try decoder.decode(QemuImageInfo.self, from: data)
 
         return image_info.virtualSize
+    }
+
+    /// Lists the internal snapshots stored in a QCOW2 image.
+    ///
+    /// Read from the image rather than the running QEMU monitor, which offers
+    /// save, restore and delete but no way to enumerate. `--force-share` is
+    /// needed because a running VM holds a write lock, and without it qemu-img
+    /// refuses to read the image at all.
+    static func snapshots(image url: URL) async throws -> [QemuImageInfo.Snapshot] {
+        let qemuImg = UTMQemuImage()
+        let srcBookmark = try url.bookmarkData()
+        qemuImg.pushArgv("info")
+        qemuImg.pushArgv("--output=json")
+        qemuImg.pushArgv("--force-share")
+        qemuImg.accessData(withBookmark: srcBookmark)
+        qemuImg.pushArgv(url.path)
+        let logging = QEMULogging()
+        logging.delegate = qemuImg
+        qemuImg.standardOutput = logging.standardOutput
+        qemuImg.standardError = logging.standardError
+        try await qemuImg.start()
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let data = qemuImg.logOutput.data(using: .utf8) ?? Data()
+        let info = try decoder.decode(QemuImageInfo.self, from: data)
+        return info.snapshots ?? []
+    }
+
+    /// Creates, applies or deletes an internal snapshot on a stopped image.
+    ///
+    /// Only valid when the VM is not running: these rewrite the image, and
+    /// QEMU holds a write lock while it has the disk open. A running VM's
+    /// snapshots go through the monitor instead.
+    static func snapshotOperation(_ operation: SnapshotOperation,
+                                  named name: String,
+                                  image url: URL) async throws {
+        let qemuImg = UTMQemuImage()
+        let srcBookmark = try url.bookmarkData()
+        qemuImg.pushArgv("snapshot")
+        qemuImg.pushArgv(operation.flag)
+        qemuImg.pushArgv(name)
+        qemuImg.accessData(withBookmark: srcBookmark)
+        qemuImg.pushArgv(url.path)
+        let logging = QEMULogging()
+        logging.delegate = qemuImg
+        qemuImg.standardOutput = logging.standardOutput
+        qemuImg.standardError = logging.standardError
+        try await qemuImg.start()
+    }
+
+    enum SnapshotOperation {
+        case create
+        case apply
+        case delete
+
+        var flag: String {
+            switch self {
+            case .create: return "-c"
+            case .apply: return "-a"
+            case .delete: return "-d"
+            }
+        }
     }
 
     static func resize(image url: URL, size : UInt64) async throws {

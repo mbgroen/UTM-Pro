@@ -280,11 +280,20 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
         state = transient
         do {
             try await body(try server.libvirt)
-            try await refreshState()
+            // A full re-read, not just the state. libvirt allocates the
+            // console port when a domain starts, so a domain that was stopped
+            // a moment ago still reports no port until its XML is read again.
+            try await refreshDomain()
         } catch {
             state = previous
             throw error
         }
+    }
+
+    /// Re-reads the whole domain from the host.
+    func refreshDomain() async throws {
+        let domain = try await server.libvirt.domain(named: domainName)
+        update(from: domain)
     }
 
     /// Re-reads the domain's state from the host.
@@ -362,6 +371,12 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
         }
         if ioService != nil {
             return
+        }
+        // The port is assigned at start, so a VM started elsewhere — or
+        // whose XML we read while it was stopped — needs a re-read before we
+        // know where to connect.
+        if domainInfo.preferredGraphics?.port == nil {
+            try await refreshDomain()
         }
 
         let address = try await server.consoleAddress(for: self)
@@ -542,6 +557,7 @@ enum UTMLibvirtVirtualMachineError: Error {
     case notSupportedRemotely
     case consoleTimedOut
     case volumeNotFoundAfterCreate(String)
+    case consolePortUnavailable
 }
 
 extension UTMLibvirtVirtualMachineError: LocalizedError {
@@ -563,6 +579,8 @@ extension UTMLibvirtVirtualMachineError: LocalizedError {
             return NSLocalizedString("This is not supported for virtual machines on a remote host.", comment: "UTMLibvirtVirtualMachine")
         case .consoleTimedOut:
             return NSLocalizedString("Timed out connecting to the console. Check that the VM's SPICE port is reachable on the host.", comment: "UTMLibvirtVirtualMachine")
+        case .consolePortUnavailable:
+            return NSLocalizedString("The virtual machine has a SPICE console but the host has not assigned it a port yet. Wait a moment and try again.", comment: "UTMLibvirtVirtualMachine")
         case .volumeNotFoundAfterCreate(let name):
             return String(format: NSLocalizedString("Created the disk '%@' but the host did not list it afterwards, so it was not attached.", comment: "UTMLibvirtVirtualMachine"), name)
         }

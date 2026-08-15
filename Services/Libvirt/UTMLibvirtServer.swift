@@ -191,8 +191,13 @@ final class UTMLibvirtServer: ObservableObject, Identifiable {
     /// unencrypted — which matters because these consoles routinely listen on
     /// every interface with no password.
     func consoleAddress(for vm: UTMLibvirtVirtualMachine) async throws -> (host: String, port: Int) {
-        guard let graphics = vm.domainInfo.preferredGraphics, let port = graphics.port else {
+        guard let graphics = vm.domainInfo.preferredGraphics else {
             throw UTMLibvirtVirtualMachineError.noConsole
+        }
+        guard let port = graphics.port else {
+            // The device exists but libvirt has not assigned it a port, which
+            // is a different problem from having no console at all.
+            throw UTMLibvirtVirtualMachineError.consolePortUnavailable
         }
         guard settings.tunnelConsole else {
             return (settings.host, port)
