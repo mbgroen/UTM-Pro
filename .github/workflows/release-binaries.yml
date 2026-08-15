@@ -1,0 +1,166 @@
+name: Release Binaries
+
+# Builds UTM Pro and attaches the result to a GitHub release as a downloadable
+# asset.
+#
+# Separate from build.yml on purpose: that workflow is upstream's, and its
+# release jobs need Apple signing certificates and App Store Connect keys that
+# a fork does not have. This one produces an unsigned build that anyone can
+# download, and never touches those secrets.
+#
+# The expensive part is the sysroot (QEMU, SPICE and friends), which the app
+# cannot build without. It is cached on the same key upstream uses, so the
+# first run is slow — expect a few hours — and later runs restore in minutes.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      rebuild_sysroot:
+        description: 'Force rebuild the sysroot?'
+        required: true
+        default: 'false'
+
+env:
+  BUILD_XCODE_PATH: ${{ vars.HOST_XCODE_PATH || '/Applications/Xcode_26.0.app' }}
+  RUNNER_IMAGE: macos-15
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 60
+
+jobs:
+  build-sysroot:
+    name: Build Sysroot (macOS ${{ matrix.arch }})
+    runs-on: macos-15
+    strategy:
+      matrix:
+        arch: [arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Xcode
+        run: |
+          [[ "$(xcode-select -p)" == "${{ env.BUILD_XCODE_PATH }}"* ]] || sudo xcode-select -s "${{ env.BUILD_XCODE_PATH }}"
+
+      - name: Check Cache
+        id: cache-sysroot
+        uses: actions/cache/restore@v4
+        with:
+          path: ./sysroot-macos-${{ matrix.arch }}
+          key: macos-${{ matrix.arch }}-${{ hashFiles('scripts/build_dependencies.sh') }}-${{ hashFiles('patches/**') }}
+
+      - name: Setup Path
+        run: echo "/usr/local/opt/bison/bin:/opt/homebrew/opt/bison/bin" >> $GITHUB_PATH
+
+      - name: Install Requirements
+        if: steps.cache-sysroot.outputs.cache-hit != 'true' || github.event.inputs.rebuild_sysroot == 'true'
+        run: |
+          brew uninstall cmake || true
+          brew install bison pkg-config gettext glib-utils libgpg-error nasm make meson cmake
+          brew install llvm spirv-llvm-translator libxcb libxrandr
+          pip3 install --break-system-packages --user six pyparsing pyyaml setuptools distlib mako
+          gem install --user-install xcpretty
+          rm -f /usr/local/lib/pkgconfig/*.pc
+
+      - name: Build Sysroot
+        if: steps.cache-sysroot.outputs.cache-hit != 'true' || github.event.inputs.rebuild_sysroot == 'true'
+        run: ./scripts/build_dependencies.sh -p macos -a ${{ matrix.arch }}
+
+      - name: Save Cache
+        if: steps.cache-sysroot.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ./sysroot-macos-${{ matrix.arch }}
+          key: ${{ steps.cache-sysroot.outputs.cache-primary-key }}
+          upload-chunk-size: 1048576
+
+      - name: Compress Sysroot
+        run: tar -acf sysroot.tgz sysroot-macOS-*
+
+      - name: Upload Sysroot
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sysroot-macos-${{ matrix.arch }}
+          path: sysroot.tgz
+          retention-days: 1
+
+  test:
+    name: Test LibvirtKit
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        run: |
+          [[ "$(xcode-select -p)" == "${{ env.BUILD_XCODE_PATH }}"* ]] || sudo xcode-select -s "${{ env.BUILD_XCODE_PATH }}"
+
+      # These tests need no sysroot, so a broken transport or parser fails the
+      # release in minutes instead of after the sysroot build.
+      - name: Run Tests
+        working-directory: Packages/LibvirtKit
+        run: swift test
+
+  build:
+    name: Build UTM Pro (macOS ${{ matrix.arch }})
+    runs-on: macos-15
+    needs: [build-sysroot, test]
+    strategy:
+      matrix:
+        arch: [arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Xcode
+        run: |
+          [[ "$(xcode-select -p)" == "${{ env.BUILD_XCODE_PATH }}"* ]] || sudo xcode-select -s "${{ env.BUILD_XCODE_PATH }}"
+
+      - name: Install Metal Toolchain
+        run: xcodebuild -downloadComponent MetalToolchain
+
+      - name: Download Sysroot
+        uses: actions/download-artifact@v4
+        with:
+          name: Sysroot-macos-${{ matrix.arch }}
+
+      - name: Unpack Sysroot
+        run: tar -xf sysroot.tgz
+
+      - name: Build
+        run: |
+          ./scripts/build_utm.sh -s macOS -a ${{ matrix.arch }} -o build
+        env:
+          # No signing identity on a fork, so the build is ad-hoc signed. The
+          # first launch needs Gatekeeper to be told to allow it.
+          CODE_SIGNING_ALLOWED: 'NO'
+          CODE_SIGNING_REQUIRED: 'NO'
+
+      - name: Package
+        run: |
+          mkdir -p artifacts
+          cd build
+          # Ad-hoc sign so the app at least has a stable identity locally.
+          codesign --force --deep --sign - UTM.app || true
+          zip -yqr ../artifacts/UTM-Pro-macOS-${{ matrix.arch }}.zip UTM.app
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UTM-Pro-macOS-${{ matrix.arch }}
+          path: artifacts/UTM-Pro-macOS-${{ matrix.arch }}.zip
+
+      # Only on a real release: workflow_dispatch runs are for checking the
+      # build, and should not attach anything to a release.
+      - name: Attach to Release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "artifacts/UTM-Pro-macOS-${{ matrix.arch }}.zip" \
+            --clobber

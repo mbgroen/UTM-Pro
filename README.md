@@ -1,11 +1,12 @@
-#  UTM
-[![Build](https://github.com/utmapp/UTM/workflows/Build/badge.svg?branch=main&event=push)][1]
+#  UTM Pro
 
 > It is possible to invent a single machine which can be used to compute any computable sequence.
 
 -- <cite>Alan Turing, 1936</cite>
 
 UTM is a full featured system emulator and virtual machine host for iOS and macOS. It is based off of QEMU. In short, it allows you to run Windows, Linux, and more on your Mac, iPhone, and iPad. More information at https://getutm.app/ and https://mac.getutm.app/
+
+**UTM Pro** is a fork of [UTM][6] that adds management of **remote libvirt/KVM hosts** alongside local virtual machines — built for driving an [OpenMediaVault][7] NAS running the `openmediavault-kvm` plugin from the same window as your local VMs. See [Remote KVM management](#remote-kvm-management) below.
 
 <p align="center">
   <img width="450px" alt="UTM running on an iPhone" src="screen.png">
@@ -29,6 +30,47 @@ UTM is a full featured system emulator and virtual machine host for iOS and macO
 * Hardware accelerated virtualization using Hypervisor.framework and QEMU
 * Boot macOS guests with Virtualization.framework on macOS 12+
 
+## Remote KVM management
+
+UTM Pro adds a second kind of virtual machine: one that runs on a remote
+libvirt host rather than on your Mac. Remote VMs appear in the same sidebar as
+local ones, grouped under the server they belong to.
+
+* Manage libvirt/KVM hosts over SSH — no agent to install on the server
+* Start, stop, reset, pause and resume remote VMs
+* Snapshots for both local and remote VMs: list, create, restore and delete
+* Storage pool and volume management: capacity, create, resize, clone, delete
+* Consoles tunnelled through the SSH connection, using UTM's existing SPICE
+  display, input, clipboard and USB redirection
+
+### Requirements
+
+The host needs `virsh` and `qemu-img` on the login account's `PATH`, and that
+account must be able to reach libvirt (`qemu:///system` by default). Nothing
+else is installed on the server.
+
+### Authentication
+
+Servers authenticate with an **Ed25519** or **ECDSA** SSH key, or a password.
+RSA keys are not supported — the SSH implementation UTM Pro uses does not
+implement RSA at all. If that is all you have, use **Generate a New Key** in
+the server form and install the public half on the host.
+
+> When installing a generated key with `ssh-copy-id`, pass `-f`. Without it,
+> `ssh-copy-id` decides whether the key is needed by logging in, so an existing
+> key that already works makes it skip the new one and report success.
+
+Host keys are pinned the first time you connect. A key that later changes stops
+the connection and asks you to confirm, rather than reconnecting silently.
+
+### Consoles
+
+Remote consoles are tunnelled over SSH by default. This matters more than it
+sounds: libvirt hosts commonly expose SPICE and VNC on `0.0.0.0` with no
+password, so anyone who can reach the host can open a console. Tunnelling keeps
+that traffic on the SSH connection. You can turn it off per server if the
+console port is already protected.
+
 ## UTM SE
 
 UTM/QEMU requires dynamic code generation (JIT) for maximum performance. JIT on iOS devices require either a jailbroken device, or one of the various workarounds found for specific versions of iOS (see "Install" for more details).
@@ -39,15 +81,33 @@ To optimize for size and build times, only the following architectures are inclu
 
 ## Install
 
-UTM (SE) for iOS: https://getutm.app/install/
-
-UTM is also available for macOS: https://mac.getutm.app/
+Builds are attached to each [release][8] as a downloadable asset. They are
+unsigned, so macOS Gatekeeper will refuse the first launch: right-click the app
+and choose Open, or clear the quarantine attribute.
 
 ## Development
 
 ### [macOS Development](Documentation/MacDevelopment.md)
 
 ### [iOS Development](Documentation/iOSDevelopment.md)
+
+### [Remote KVM architecture](Documentation/RemoteKVM.md)
+
+The remote management code lives in a self-contained Swift package,
+`Packages/LibvirtKit`, which has no dependency on the app. It can be built and
+tested on its own:
+
+```sh
+cd Packages/LibvirtKit
+swift test
+```
+
+It also ships `libvirtprobe`, a read-only command line harness for checking a
+host without going through the app:
+
+```sh
+LIBVIRT_SSH_KEY_FILE=~/.ssh/id_ed25519 swift run libvirtprobe root@my-nas.lan
+```
 
 ## Related
 
@@ -76,3 +136,6 @@ Continuous integration hosting is provided by [MacStadium](https://www.macstadiu
   [3]: https://github.com/ktemkin/qemu/blob/with_tcti/tcg/aarch64-tcti/README.md
   [4]: https://github.com/ish-app/ish
   [5]: https://github.com/holzschu/a-shell
+  [6]: https://github.com/utmapp/UTM
+  [7]: https://www.openmediavault.org/
+  [8]: https://github.com/mbgroen/UTM-Pro/releases
