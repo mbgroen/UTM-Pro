@@ -148,6 +148,11 @@ do {
         try await WriteTest.run(libvirt: libvirt, domain: target, pool: pool)
     }
 
+    // Checks the SSH tunnel the console depends on, without opening a console.
+    if let target = environment["LIBVIRT_TUNNEL_TEST_DOMAIN"] {
+        try await TunnelTest.run(connection: connection, libvirt: libvirt, domain: target)
+    }
+
     await connection.disconnect()
     print("\nok")
 } catch {
