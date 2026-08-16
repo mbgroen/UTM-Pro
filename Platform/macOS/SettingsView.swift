@@ -20,6 +20,7 @@ import SwiftUI
 struct SettingsView: View {
     private enum Selection: CaseIterable, Identifiable {
         case application
+        case remoteHosts
         case display
         case sound
         case input
@@ -37,6 +38,15 @@ struct SettingsView: View {
                     return false
                 }
             }
+            if self == .remoteHosts {
+                #if WITH_REMOTE_KVM
+                if #unavailable(macOS 13) {
+                    return false
+                }
+                #else
+                return false
+                #endif
+            }
             return true
         }
 
@@ -44,6 +54,8 @@ struct SettingsView: View {
             switch self {
             case .application:
                 return "Application"
+            case .remoteHosts:
+                return "Remote Hosts"
             case .display:
                 return "Display"
             case .sound:
@@ -63,6 +75,8 @@ struct SettingsView: View {
             switch self {
             case .application:
                 return "app.badge"
+            case .remoteHosts:
+                return "externaldrive.badge.wifi"
             case .display:
                 return "rectangle.on.rectangle"
             case .sound:
@@ -83,6 +97,16 @@ struct SettingsView: View {
             switch self {
             case .application:
                 ApplicationSettingsView()
+            case .remoteHosts:
+                #if WITH_REMOTE_KVM
+                if #available(macOS 13, *) {
+                    RemoteHostSettingsView()
+                } else {
+                    EmptyView()
+                }
+                #else
+                EmptyView()
+                #endif
             case .display:
                 DisplaySettingsView()
             case .sound:
@@ -121,7 +145,11 @@ struct SettingsView: View {
                 if category.isAvailable {
                     Label(category.title, systemImage: category.systemImage)
                 }
-            }.toolbar(removing: .sidebarToggle)
+            }
+            .toolbar(removing: .sidebarToggle)
+            // The column sizes itself to the shortest labels and then clips
+            // the longest one, which is the category people are here for.
+            .navigationSplitViewColumnWidth(min: 180, ideal: 190, max: 260)
         } detail: {
             VStack(alignment: .leading) {
                 HStack(alignment: .top) {
@@ -479,6 +507,63 @@ struct FileSettingsView: View {
                 Toggle(isOn: $isUseFileLock) {
                     Text("Lock drive images when in use")
                 }.help("If enabled, all writable drive images will be locked when the VM is running. Read-only drive images will not be locked.")
+            }
+        }
+    }
+}
+
+/// Settings for remote libvirt/KVM hosts.
+///
+/// Everything here was a constant compiled into the app, or a choice repeated
+/// on every server's form. None of it belonged in either place: a refresh
+/// interval that suits a NAS on the same switch is wrong over a VPN, and
+/// whether to reach for someone's server at launch is a matter of taste, not
+/// a fact about the code.
+@available(macOS 13, *)
+struct RemoteHostSettingsView: View {
+    @AppStorage("LibvirtConnectOnLaunch") var isConnectOnLaunch: Bool = false
+    @AppStorage("LibvirtRefreshInterval") var refreshInterval: Int = 15
+    @AppStorage("LibvirtTunnelConsoleByDefault") var isTunnelConsoleByDefault: Bool = true
+
+    /// Off, then intervals that span a NAS on the same switch through a server
+    /// at the end of a VPN.
+    private static let intervals: [Int] = [0, 5, 15, 30, 60, 300]
+
+    private func label(for interval: Int) -> LocalizedStringKey {
+        switch interval {
+        case 0: return "Never"
+        case 60: return "Every minute"
+        case 300: return "Every 5 minutes"
+        default: return "Every \(interval) seconds"
+        }
+    }
+
+    var body: some View {
+        Form {
+            Section(header: Text("Connecting")) {
+                Toggle(isOn: $isConnectOnLaunch) {
+                    Text("Connect saved servers when \(productName) opens")
+                }.help("Off by default: a saved server is a stored address and credential, not a standing instruction to log in.")
+            }
+
+            Section(header: Text("Refreshing")) {
+                Picker("Check Servers", selection: $refreshInterval) {
+                    ForEach(Self.intervals, id: \.self) { interval in
+                        Text(label(for: interval)).tag(interval)
+                    }
+                }.help("How often to re-read virtual machines and storage on connected servers, so changes made elsewhere appear here.")
+                if refreshInterval == 0 {
+                    Text("Servers will show what they reported when you connected. Use a server's Refresh command to update it.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Section(header: Text("New Servers")) {
+                Toggle(isOn: $isTunnelConsoleByDefault) {
+                    Text("Tunnel console through SSH")
+                }.help("The default for servers you add from now on. A host's console port is normally unauthenticated, so tunnelling keeps it off the network.")
             }
         }
     }

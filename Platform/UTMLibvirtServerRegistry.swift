@@ -130,11 +130,18 @@ final class UTMLibvirtServerRegistry: ObservableObject {
     /// libvirt has an event stream, but reaching it means holding an extra
     /// long-lived channel and parsing an output format meant for humans.
     /// Polling one batched command is far simpler and costs a single round
-    /// trip; the interval is long enough not to be chatty and short enough
-    /// that a VM started from the OMV web interface appears while the user is
-    /// still looking at the window.
+    /// trip; the default interval is long enough not to be chatty and short
+    /// enough that a VM started from the OMV web interface appears while the
+    /// user is still looking at the window.
+    ///
+    /// An interval of zero stops polling: over a metered or slow link, a
+    /// server that only updates when asked is the better trade.
     func startPolling(every interval: TimeInterval = 15) {
         pollingTask?.cancel()
+        pollingTask = nil
+        guard interval > 0 else {
+            return
+        }
         pollingTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))

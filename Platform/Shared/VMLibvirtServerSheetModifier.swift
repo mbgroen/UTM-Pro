@@ -24,12 +24,18 @@ struct VMLibvirtServerSheetModifier: ViewModifier {
 
     @EnvironmentObject private var data: UTMData
 
+    @AppStorage("LibvirtConnectOnLaunch") private var isConnectOnLaunch: Bool = false
+    @AppStorage("LibvirtRefreshInterval") private var refreshInterval: Int = 15
+    @AppStorage("LibvirtTunnelConsoleByDefault") private var isTunnelConsoleByDefault: Bool = true
+
     func body(content: Content) -> some View {
         content
             .toolbar {
                 ToolbarItem(placement: .automatic) {
                     Button {
-                        editingServer = UTMLibvirtServerSettings()
+                        var settings = UTMLibvirtServerSettings()
+                        settings.tunnelConsole = isTunnelConsoleByDefault
+                        editingServer = settings
                     } label: {
                         Label("Add Server", systemImage: "externaldrive.badge.plus")
                     }
@@ -50,13 +56,18 @@ struct VMLibvirtServerSheetModifier: ViewModifier {
                 }
             }
             .task {
-                // Deliberately does not connect. A saved server is a stored
-                // address and credential, not a standing instruction to log
-                // in — reaching for someone's NAS the moment the app opens is
-                // presumptuous, and on a machine that is asleep or away it
-                // just produces errors. Polling only follows a connection the
-                // user asked for.
-                data.libvirtServers.startPolling()
+                // Off unless asked for. A saved server is a stored address and
+                // credential, not a standing instruction to log in — reaching
+                // for someone's NAS the moment the app opens is presumptuous,
+                // and on a machine that is asleep or away it just produces
+                // errors. Polling only follows a connection that exists.
+                if isConnectOnLaunch {
+                    await data.libvirtServers.connectAll()
+                }
+                data.libvirtServers.startPolling(every: TimeInterval(refreshInterval))
+            }
+            .onChange(of: refreshInterval) { newValue in
+                data.libvirtServers.startPolling(every: TimeInterval(newValue))
             }
     }
 }
