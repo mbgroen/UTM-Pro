@@ -617,13 +617,35 @@ extension UTMQemuVirtualMachine {
         }
         do {
             try await _saveSnapshot(name: name ?? kSuspendSnapshotName)
-            if name == nil {
+            if let name = name {
+                // The monitor does not always report a failed `savevm` in a
+                // form the string check above recognises, and a save that
+                // quietly did nothing is worse than one that failed loudly:
+                // you only find out when you try to go back. Confirm the
+                // snapshot is really in the image.
+                try await confirmSnapshotWasWritten(named: name)
+            } else {
                 await registryEntry.setIsSuspended(true)
                 try saveScreenshot()
             }
         } catch {
             throw UTMQemuVirtualMachineError.saveSnapshotFailed(error)
         }
+    }
+
+    /// Throws unless `name` now exists in the VM's snapshot image.
+    private func confirmSnapshotWasWritten(named name: String) async throws {
+        // A listing that itself fails says nothing about the save, so let it
+        // pass rather than report a save failure that did not happen.
+        guard let snapshots = try? await listSnapshots() else {
+            return
+        }
+        guard !snapshots.contains(where: { $0.name == name }) else {
+            return
+        }
+        // The wrapping error already explains what an unsupported device
+        // means, so say only what it cannot know: nothing was written.
+        throw UTMQemuVirtualMachineError.qemuError(NSLocalizedString("QEMU reported success, but the snapshot is not in the disk image.", comment: "UTMQemuVirtualMachine"))
     }
     
     /// The image internal snapshots live in.

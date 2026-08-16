@@ -311,6 +311,7 @@
 		959B4B3FA70EE5BE6FEB3F50 /* VMLibvirtNetworkAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A6E4C6E9A71063611023607 /* VMLibvirtNetworkAddView.swift */; };
 		9D6E4D97B5E113909B1506E6 /* VMDisplayLibvirtTerminalWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B74086A3A806583D8BB225 /* VMDisplayLibvirtTerminalWindowController.swift */; };
 		9E1747D4B7031944D23804DE /* VMSnapshotsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 629745E28F96D5A6D5495AB4 /* VMSnapshotsView.swift */; };
+		9E9C464185D6FFF2A10D7F18 /* VMDisplayWindowController+Snapshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = E28A4A7D9D66B2A929E64691 /* VMDisplayWindowController+Snapshots.swift */; };
 		A0984F829D799776CCFA4CC0 /* UTMLibvirtDomainMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8C46F59C64D3B972869FCC /* UTMLibvirtDomainMapping.swift */; };
 		A890417A90D717D823FF9EC8 /* VMLibvirtServerSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018C43E9828D4EFE82003165 /* VMLibvirtServerSheetModifier.swift */; };
 		A8984051825B7198710780D6 /* VMLibvirtServerSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5137465E8EE9769092E46743 /* VMLibvirtServerSection.swift */; };
@@ -2246,6 +2247,7 @@
 		CEFE98DE29485237007CB7A8 /* UTM.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = UTM.sdef; sourceTree = "<group>"; };
 		CEFE98E029485776007CB7A8 /* UTMScriptingVirtualMachineImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTMScriptingVirtualMachineImpl.swift; sourceTree = "<group>"; };
 		D9164F81BD5E36959DE63224 /* UTMLibvirtVirtualMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UTMLibvirtVirtualMachine.swift; path = Services/Libvirt/UTMLibvirtVirtualMachine.swift; sourceTree = SOURCE_ROOT; };
+		E28A4A7D9D66B2A929E64691 /* VMDisplayWindowController+Snapshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "VMDisplayWindowController+Snapshots.swift"; path = "Platform/macOS/Display/VMDisplayWindowController+Snapshots.swift"; sourceTree = SOURCE_ROOT; };
 		E2D64BC7241DB24B0034E0C6 /* UTMSpiceIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UTMSpiceIO.h; sourceTree = "<group>"; };
 		E2D64BC8241DB24B0034E0C6 /* UTMSpiceIO.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UTMSpiceIO.m; sourceTree = "<group>"; };
 		E2D64BE0241EAEBE0034E0C6 /* UTMSpiceIODelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UTMSpiceIODelegate.h; sourceTree = "<group>"; };
@@ -2706,6 +2708,7 @@
 				845F170C289CB3DE00944904 /* VMDisplayTerminal.swift */,
 				CE03D0D124DCF4B600F76B84 /* VMMetalView.swift */,
 				CE03D0D324DCF6DD00F76B84 /* VMMetalViewInputDelegate.swift */,
+				E28A4A7D9D66B2A929E64691 /* VMDisplayWindowController+Snapshots.swift */,
 			);
 			path = Display;
 			sourceTree = "<group>";
@@ -4232,6 +4235,7 @@
 				9D6E4D97B5E113909B1506E6 /* VMDisplayLibvirtTerminalWindowController.swift in Sources */,
 				0BAB405A903583A45D074326 /* VMLibvirtActionsView.swift in Sources */,
 				75C04D64BD345F88599D84D8 /* VMLibvirtNetworkAddView.swift in Sources */,
+				9E9C464185D6FFF2A10D7F18 /* VMDisplayWindowController+Snapshots.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -21,6 +21,7 @@
                 <outlet property="restartToolbarItem" destination="G7P-HJ-bcy" id="R8T-hV-Gr6"/>
                 <outlet property="screenshotView" destination="UUd-qY-POz" id="nMM-Nr-mQo"/>
                 <outlet property="sharedFolderToolbarItem" destination="7EC-GE-fIl" id="fz7-Lc-ch7"/>
+                <outlet property="snapshotToolbarItem" destination="Sn1-Ps-h0t" id="Sn4-Ps-h0t"/>
                 <outlet property="startButton" destination="ZTi-Hs-ge6" id="FLE-Yi-azI"/>
                 <outlet property="startPauseToolbarItem" destination="kT2-2U-cYm" id="AwM-e3-ge3"/>
                 <outlet property="stopToolbarItem" destination="Bkx-Ph-j0D" id="yqL-pR-3gr"/>
@@ -237,6 +238,19 @@
                             </connections>
                         </button>
                     </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="4C1A93F8-5E17-4F0B-9C22-8B2D4E7A61C3" label="Snapshots" paletteLabel="Snapshots" toolTip="Save or restore a snapshot" image="camera.on.rectangle" catalog="system" sizingBehavior="auto" id="Sn1-Ps-h0t">
+                        <button key="view" verticalHuggingPriority="750" id="Sn2-Ps-h0t">
+                            <rect key="frame" x="7" y="14" width="27" height="23"/>
+                            <autoresizingMask key="autoresizingMask"/>
+                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="camera.on.rectangle" catalog="system" imagePosition="only" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Sn3-Ps-h0t">
+                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="snapshotButtonPressed:" target="-2" id="Sn5-Ps-h0t"/>
+                            </connections>
+                        </button>
+                    </toolbarItem>
                 </allowedToolbarItems>
                 <defaultToolbarItems>
                     <toolbarItem reference="Bkx-Ph-j0D"/>
@@ -246,6 +260,7 @@
                     <toolbarItem reference="Ulf-oT-4cP"/>
                     <toolbarItem reference="tlw-Fb-ne3"/>
                     <toolbarItem reference="bKL-Th-FFw"/>
+                    <toolbarItem reference="Sn1-Ps-h0t"/>
                     <toolbarItem reference="7EC-GE-fIl"/>
                     <toolbarItem reference="MQ2-L1-yl7"/>
                 </defaultToolbarItems>

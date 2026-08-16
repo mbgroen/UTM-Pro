@@ -28,6 +28,7 @@ class VMDisplayWindowController: NSWindowController, UTMVirtualMachineDelegate {
         case resize
         case windows
         case keyboardShortcut
+        case snapshot
     }
 
     @IBOutlet weak var displayView: NSView!
@@ -45,6 +46,7 @@ class VMDisplayWindowController: NSWindowController, UTMVirtualMachineDelegate {
     @IBOutlet private weak var usbToolbarItem: NSToolbarItem!
     @IBOutlet private weak var drivesToolbarItem: NSToolbarItem!
     @IBOutlet private weak var sharedFolderToolbarItem: NSToolbarItem!
+    @IBOutlet private weak var snapshotToolbarItem: NSToolbarItem!
     @IBOutlet private weak var resizeConsoleToolbarItem: NSToolbarItem!
     @IBOutlet private weak var windowsToolbarItem: NSToolbarItem!
     @IBOutlet private weak var keyboardShortcutsItem: NSToolbarItem!
@@ -57,6 +59,7 @@ class VMDisplayWindowController: NSWindowController, UTMVirtualMachineDelegate {
     private var usbMenuItem: NSMenuItem!
     private var drivesMenuItem: NSMenuItem!
     private var sharedFolderMenuItem: NSMenuItem!
+    private var snapshotMenuItem: NSMenuItem!
     private var windowsMenuItem: NSMenuItem!
     private var keyboardShortcutMenuItem: NSMenuItem!
 
@@ -205,6 +208,9 @@ class VMDisplayWindowController: NSWindowController, UTMVirtualMachineDelegate {
             case .keyboardShortcut:
                 keyboardShortcutsItem.isEnabled = isEnabled
                 keyboardShortcutMenuItem.isEnabled = isEnabled
+            case .snapshot:
+                snapshotToolbarItem.isEnabled = isEnabled
+                snapshotMenuItem.isEnabled = isEnabled
             }
         }
     }
@@ -262,7 +268,7 @@ class VMDisplayWindowController: NSWindowController, UTMVirtualMachineDelegate {
         startPauseToolbarItem.image = NSImage(systemSymbolName: "pause", accessibilityDescription: pauseDescription)
         startPauseToolbarItem.label = pauseDescription
         startPauseMenuItem.title = pauseDescription
-        setControl([.startPause, .power, .restart, .captureInput, .resize, .windows, .keyboardShortcut], isEnabled: true)
+        setControl([.startPause, .power, .restart, .captureInput, .resize, .windows, .keyboardShortcut, .snapshot], isEnabled: true)
         window!.makeFirstResponder(displayView.subviews.first)
         if isPreventIdleSleep && !isSecondary {
             var preventIdleSleepAssertion: IOPMAssertionID = .zero
@@ -295,6 +301,9 @@ class VMDisplayWindowController: NSWindowController, UTMVirtualMachineDelegate {
             setControl([.power, .restart], isEnabled: !stopped)
         }
         setControl([.captureInput, .resize, .drives, .sharedFolder, .usb, .windows, .keyboardShortcut], isEnabled: false)
+        // Snapshots are the exception: this fork can read and write them with
+        // the VM off, which is when you most often want one.
+        setControl(.snapshot, isEnabled: !busy)
         window!.makeFirstResponder(nil)
         if let preventIdleSleepAssertion = preventIdleSleepAssertion {
             IOPMAssertionRelease(preventIdleSleepAssertion)
@@ -613,6 +622,9 @@ extension VMDisplayWindowController {
         windowsMenuItem = LazyMenuItem { [weak self] in self?.updateWindowsMenu($0) }
         windowsMenuItem.title = NSLocalizedString("Displays", comment: "VMDisplayWindowController")
         menu.addItem(windowsMenuItem)
+        snapshotMenuItem = LazyMenuItem { [weak self] in self?.updateSnapshotMenu($0) }
+        snapshotMenuItem.title = NSLocalizedString("Snapshots", comment: "VMDisplayWindowController")
+        menu.addItem(snapshotMenuItem)
         mainMenu = menu
         mainMenuItem = NSMenuItem()
         mainMenuItem.title = NSLocalizedString("Virtual Machine", comment: "VMDisplayWindowController")

@@ -84,7 +84,9 @@ class VMDisplayAppleWindowController: VMDisplayWindowController {
         window!.subtitle = defaultSubtitle
         updateWindowFrame()
         super.enterLive()
-        setControl([.drives, .usb, .resize, .keyboardShortcut], isEnabled: false)
+        // Virtualization.framework has no snapshot facility, so the button
+        // would only ever produce an error.
+        setControl([.drives, .usb, .resize, .keyboardShortcut, .snapshot], isEnabled: false)
         if #available(macOS 13, *) {
             setControl(.sharedFolder, isEnabled: true)
         } else if #available(macOS 12, *) {
