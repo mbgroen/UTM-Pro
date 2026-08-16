@@ -137,6 +137,14 @@ protocol UTMVirtualMachine: AnyObject, Identifiable {
     /// Resumes the VM
     func resume() async throws
     
+    /// Lists the VM's snapshots
+    ///
+    /// Declared here, not only in the extension below: a call through
+    /// `any UTMVirtualMachine` dispatches statically to an extension, so a
+    /// backend that implements this would be bypassed and the default empty
+    /// list returned instead — snapshots that exist would simply not appear.
+    func listSnapshots() async throws -> [UTMVirtualMachineSnapshot]
+
     /// Saves the current VM state
     /// - Parameter name: Optional snaphot name (default if nil)
     func saveSnapshot(name: String?) async throws

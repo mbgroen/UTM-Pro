@@ -40,11 +40,15 @@ struct VMLibvirtDiskListView: View {
     }
 
     private var disks: [DiskEntry] {
-        vm.config.drives.map { drive in
-            DiskEntry(target: drive.id,
-                      path: vm.domainInfo.diskPaths[drive.id],
-                      format: drive.isRawImage ? "raw" : "qcow2",
-                      isCDROM: drive.imageType == .cd)
+        // The projection's drive ids are generated, so they say nothing about
+        // the guest. The libvirt targets are kept alongside in the same order.
+        let targets = vm.domainInfo.diskTargets
+        return vm.config.drives.enumerated().map { index, drive in
+            let target = index < targets.count ? targets[index] : drive.id
+            return DiskEntry(target: target,
+                             path: vm.domainInfo.diskPaths[target],
+                             format: drive.isRawImage ? "raw" : "qcow2",
+                             isCDROM: drive.imageType == .cd)
         }
     }
 

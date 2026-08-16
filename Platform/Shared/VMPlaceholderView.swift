@@ -97,8 +97,11 @@ fileprivate struct SecondRow: View {
         TileButton(Label(String.guide, systemImage: "book.circle")) {
             openURL(URL(string: "https://docs.getutm.app/basics/basics/")!)
         }
-        TileButton(Label(String.support, systemImage: "questionmark.circle")) {
-            openURL(URL(string: "https://docs.getutm.app/")!)
+        // Points at this fork, not upstream: nobody there can help with the
+        // remote-host features, and sending people to the wrong tracker wastes
+        // their time and the maintainers'.
+        TileButton(Label(String.support, systemImage: "exclamationmark.bubble")) {
+            openURL(URL(string: "https://github.com/mbgroen/UTM-Pro/issues")!)
         }
     }
 }
@@ -107,7 +110,7 @@ fileprivate extension String {
     static let create = NSLocalizedString("Create a New Virtual Machine", comment: "Welcome view")
     static let browse = NSLocalizedString("Browse UTM Gallery", comment: "Welcome view")
     static let guide = NSLocalizedString("User Guide", comment: "Welcome view")
-    static let support = NSLocalizedString("Support", comment: "Welcome view")
+    static let support = NSLocalizedString("Report an Issue", comment: "Welcome view")
     static let server = NSLocalizedString("Share This Mac\u{2019}s VMs", comment: "Server view")
 }
 

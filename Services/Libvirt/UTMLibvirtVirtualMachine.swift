@@ -411,8 +411,21 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
         guard state == .started || state == .paused else {
             throw UTMLibvirtVirtualMachineError.notRunning
         }
-        if ioService != nil {
-            return
+        // A console that is still attached but no longer connected is worse
+        // than none: the window shows a dead picture and reconnecting appears
+        // to do nothing. Suspending a domain stops its vCPUs, and the SPICE
+        // client does not always survive that, so an existing session is only
+        // reused while it is actually up.
+        if let existing = ioService {
+            if existing.isConnected {
+                return
+            }
+            existing.disconnect()
+            ioService = nil
+            if tunnelPort != nil {
+                await server.closeConsole(for: self)
+                tunnelPort = nil
+            }
         }
         // The port is assigned at start, so a VM started elsewhere — or
         // whose XML we read while it was stopped — needs a re-read before we

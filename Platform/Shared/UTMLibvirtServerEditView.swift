@@ -80,7 +80,7 @@ struct UTMLibvirtServerEditView: View {
 
     private var connectionSection: some View {
         Section {
-            TextField("Address", text: $settings.host, prompt: Text("omv.lan"))
+            TextField("Address", text: $settings.host, prompt: Text("nas.local"))
                 #if !os(macOS)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
