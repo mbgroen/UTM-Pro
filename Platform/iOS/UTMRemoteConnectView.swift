@@ -37,7 +37,7 @@ struct UTMRemoteConnectView: View {
                     ProgressView().progressViewStyle(.circular)
                 }
                 Spacer()
-                Text("Select a UTM Server")
+                Text("Select a UTM Pro Server")
                     .font(.headline)
                 Spacer()
                 Button {
@@ -139,7 +139,7 @@ struct UTMRemoteConnectView: View {
     @ViewBuilder
     private var helpText: some View {
         if remoteClientState.foundServers.isEmpty {
-            Text("Make sure the latest version of UTM is running on your Mac and UTM Server is enabled. You can download UTM from the Mac App Store.")
+            Text("Make sure the latest version of UTM Pro is running on your Mac and UTM Pro Server is enabled. You can download UTM Pro from the Mac App Store.")
         }
     }
 }

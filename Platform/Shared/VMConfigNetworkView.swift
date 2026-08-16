@@ -54,9 +54,9 @@ struct VMConfigNetworkView: View {
                                 Text(interface.name)
                                     .tag(interface.uuid as String?)
                             }
-                        }.help("You can configure additional host networks in UTM Settings.")
+                        }.help("You can configure additional host networks in UTM Pro Settings.")
                         if config.hostNetUuid != nil {
-                            Text("Note: No DHCP will be provided by UTM")
+                            Text("Note: No DHCP will be provided by UTM Pro")
                         }
                     }
                     #endif

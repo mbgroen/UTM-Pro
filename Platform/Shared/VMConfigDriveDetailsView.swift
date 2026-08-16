@@ -94,7 +94,7 @@ struct VMConfigDriveDetailsView: View {
                     config.interfaceVersion = UTMQemuConfigurationDrive.latestInterfaceVersion
                 } label: {
                     Text("Update Interface")
-                }.help("Older versions of UTM added each IDE device to a separate bus. Check this to change the configuration to place two units on each bus.")
+                }.help("Older versions of UTM Pro added each IDE device to a separate bus. Check this to change the configuration to place two units on each bus.")
             }
             
             if let imageUrl = config.imageURL {

@@ -100,7 +100,7 @@ struct VMConfigQEMUArgumentsView: View {
                     showExportArgs.toggle()
                 } label: {
                     Text("Export QEMU Command…")
-                }.help("Export all arguments as a text file. This is only for debugging purposes as UTM's built-in QEMU differs from upstream QEMU in supported arguments.")
+                }.help("Export all arguments as a text file. This is only for debugging purposes as UTM Pro's built-in QEMU differs from upstream QEMU in supported arguments.")
                 Spacer()
                 let customSelected = selected.intersection(customUuids)
                 if !customSelected.isEmpty {

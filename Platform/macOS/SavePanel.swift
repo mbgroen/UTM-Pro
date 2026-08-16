@@ -48,7 +48,7 @@ struct SavePanel: NSViewRepresentable {
                 savePanel.nameFieldStringValue = "debug"
                 savePanel.allowedContentTypes = [.appleLog]
             case .utmCopy(let vm), .utmMove(let vm):
-                savePanel.title = NSLocalizedString("Select where to save UTM Virtual Machine:", comment: "SavePanel")
+                savePanel.title = NSLocalizedString("Select where to save UTM Pro Virtual Machine:", comment: "SavePanel")
                 savePanel.nameFieldStringValue = vm.pathUrl.lastPathComponent
                 savePanel.allowedContentTypes = [.UTM]
             case .qemuCommand:

@@ -94,7 +94,7 @@ struct VMWizardStartView: View {
                 Text("Custom")
             } footer: {
                 if !isEmulationSupported && !isVirtualizationSupported {
-                    Text("Your version of iOS does not support running VMs while unmodified. You must either run UTM while jailbroken or with a remote debugger attached. See https://getutm.app/install/ for more details.")
+                    Text("Your version of iOS does not support running VMs while unmodified. You must either run UTM Pro while jailbroken or with a remote debugger attached. See https://getutm.app/install/ for more details.")
                 } else if !isVirtualizationSupported {
                     Text("Virtualization is not supported on your system.")
                 } else if !isEmulationSupported {

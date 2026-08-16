@@ -123,7 +123,7 @@
         } else {
             alert.messageText = NSLocalizedString("Failed to save suspend state", comment: "AppDelegate")
         }
-        alert.informativeText = NSLocalizedString("Quitting UTM will kill all running VMs.", comment: "VMQemuDisplayMetalWindowController")
+        alert.informativeText = NSLocalizedString("Quitting UTM Pro will kill all running VMs.", comment: "VMQemuDisplayMetalWindowController")
         if let error = error {
             alert.informativeText = error.localizedDescription + "\n" + alert.informativeText
         }

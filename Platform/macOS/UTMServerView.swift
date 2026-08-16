@@ -24,7 +24,7 @@ struct UTMServerView: View {
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
-                Toggle("Enable UTM Server", isOn: Binding<Bool>(get: {
+                Toggle("Enable UTM Pro Server", isOn: Binding<Bool>(get: {
                     remoteServer.isServerActive
                 }, set: { value in
                     if value {

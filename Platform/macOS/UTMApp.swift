@@ -58,7 +58,7 @@ struct UTMApp: App {
     @available(macOS 13, *)
     @SceneBuilder
     var newBody: some Scene {
-        Window("UTM Library", id: "home") {
+        Window("UTM Pro Library", id: "home") {
             homeWindow
                 .navigationTitle(productName)
         }.commands {
@@ -68,7 +68,7 @@ struct UTMApp: App {
             SettingsView()
         }
         UTMMenuBarExtraScene(data: data)
-        Window("UTM Server", id: "server") {
+        Window("UTM Pro Server", id: "server") {
             UTMServerView().environmentObject(data.remoteServer.state)
         }
     }

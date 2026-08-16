@@ -229,7 +229,7 @@ struct VMLibvirtCreateView: View {
         Section {
             // Stated plainly because it differs from what the OMV plugin does,
             // and it is a security improvement worth being explicit about.
-            Label("The console will listen on the host's loopback only, and UTM reaches it through the SSH tunnel.",
+            Label("The console will listen on the host's loopback only, and UTM Pro reaches it through the SSH tunnel.",
                   systemImage: "lock.shield")
                 .font(.caption)
                 .foregroundColor(.secondary)

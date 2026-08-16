@@ -274,7 +274,7 @@ class VMDisplayWindowController: NSWindowController, UTMVirtualMachineDelegate {
             var preventIdleSleepAssertion: IOPMAssertionID = .zero
             let success = IOPMAssertionCreateWithName(kIOPMAssertPreventUserIdleSystemSleep as CFString,
                                                       IOPMAssertionLevel(kIOPMAssertionLevelOn),
-                                                      "UTM Virtual Machine Running" as CFString,
+                                                      "UTM Pro Virtual Machine Running" as CFString,
                                                       &preventIdleSleepAssertion)
             if success == kIOReturnSuccess {
                 self.preventIdleSleepAssertion = preventIdleSleepAssertion

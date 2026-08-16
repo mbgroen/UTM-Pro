@@ -26,12 +26,12 @@ struct UTMMenuBarExtraScene: Scene {
     
     var body: some Scene {
         MenuBarExtra(isInserted: $isMenuIconShown) {
-            Button("Show UTM") {
+            Button("Show UTM Pro") {
                 openWindow(id: "home")
             }.keyboardShortcut("0")
             .help("Show the main window.")
             Toggle("Hide dock icon on next launch", isOn: $isDockIconHidden)
-            .help("Requires restarting UTM to take affect.")
+            .help("Requires restarting UTM Pro to take affect.")
             Divider()
             if data.virtualMachines.isEmpty {
                 Text("No virtual machines found.")
@@ -44,7 +44,7 @@ struct UTMMenuBarExtraScene: Scene {
             Button("Quit") {
                 NSApp.terminate(self)
             }.keyboardShortcut("Q")
-            .help("Terminate UTM and stop all running VMs.")
+            .help("Terminate UTM Pro and stop all running VMs.")
         } label: {
             Image("MenuBarExtra")
         }

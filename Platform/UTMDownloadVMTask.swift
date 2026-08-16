@@ -27,7 +27,7 @@ class UTMDownloadVMTask: UTMDownloadTask {
     static private func name(for url: URL) -> String {
         /// try to detect the filename from the URL
         let filename = url.lastPathComponent
-        var nameWithoutZIP = "UTM Virtual Machine"
+        var nameWithoutZIP = "UTM Pro Virtual Machine"
         /// Try to get the start index of the `.zip` part of the filename
         if let index = filename.range(of: ".zip", options: [])?.lowerBound {
             nameWithoutZIP = String(filename[..<index])
@@ -100,7 +100,7 @@ class UTMDownloadVMTask: UTMDownloadTask {
     
     private class UnzipNoUTMFileError: Error {
         var errorDescription: String? {
-            NSLocalizedString("There is no UTM file in the downloaded ZIP archive.", comment: "Error shown when importing a ZIP file from web that doesn't contain a UTM Virtual Machine.")
+            NSLocalizedString("There is no UTM Pro file in the downloaded ZIP archive.", comment: "Error shown when importing a ZIP file from web that doesn't contain a UTM Pro Virtual Machine.")
         }
     }
     

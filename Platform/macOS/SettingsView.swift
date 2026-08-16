@@ -167,7 +167,7 @@ struct ApplicationSettingsView: View {
     var body: some View {
         Form {
             Toggle(isOn: $isKeepRunningAfterLastWindowClosed, label: {
-                Text("Keep UTM running after last window is closed and all VMs are shut down")
+                Text("Keep UTM Pro running after last window is closed and all VMs are shut down")
             })
             if #available(macOS 13, *) {
                 Toggle(isOn: $isDockIconHidden.inverted, label: {
@@ -500,7 +500,7 @@ struct ServerSettingsView: View {
     var body: some View {
         Form {
             Section(header: Text("Startup")) {
-                Toggle("Automatically start UTM server", isOn: $isServerAutostart)
+                Toggle("Automatically start UTM Pro server", isOn: $isServerAutostart)
             }
             Section(header: Text("Network")) {
                 Toggle("Reject unknown connections by default", isOn: $isServerAutoblock)

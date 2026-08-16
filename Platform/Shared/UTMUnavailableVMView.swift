@@ -51,7 +51,7 @@ fileprivate struct WrappedVMDetailsView: View {
     
     var body: some View {
         VStack(alignment: .center) {
-            Text(isAccessible ? "This virtual machine must be re-added to UTM by opening it with Finder. You can find it at the path: \(path)"
+            Text(isAccessible ? "This virtual machine must be re-added to UTM Pro by opening it with Finder. You can find it at the path: \(path)"
                  : "This virtual machine cannot be found at: \(path)")
                 .lineLimit(nil)
                 .padding()

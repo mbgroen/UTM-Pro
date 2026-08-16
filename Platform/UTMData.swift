@@ -132,7 +132,7 @@ enum AlertItem: Identifiable {
     private var busyQueue: DispatchQueue
     
     init() {
-        self.busyQueue = DispatchQueue(label: "UTM Busy Queue", qos: .userInitiated)
+        self.busyQueue = DispatchQueue(label: "UTM Pro Busy Queue", qos: .userInitiated)
         self.showSettingsModal = false
         self.showNewVMSheet = false
         self.busy = false
@@ -1245,7 +1245,7 @@ extension UTMDataError: LocalizedError {
         case .shortcutCreationFailed:
             return NSLocalizedString("Unable to add a shortcut to the new location.", comment: "UTMData")
         case .importFailed:
-            return NSLocalizedString("Cannot import this VM. Either the configuration is invalid, created in a newer version of UTM, or on a platform that is incompatible with this version of UTM.", comment: "UTMData")
+            return NSLocalizedString("Cannot import this VM. Either the configuration is invalid, created in a newer version of UTM Pro, or on a platform that is incompatible with this version of UTM.", comment: "UTMData")
         case .importParseFailed:
             return NSLocalizedString("Failed to parse imported VM.", comment: "UTMData")
         case .altServerNotFound:

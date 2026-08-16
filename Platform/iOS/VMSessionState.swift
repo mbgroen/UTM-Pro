@@ -598,7 +598,7 @@ extension VMSessionState {
     private func showBackgroundExpireNotification() {
         let content = UNMutableNotificationContent()
         content.title = NSLocalizedString("Background task is about to expire", comment: "VMSessionState")
-        content.body = NSLocalizedString("Switch back to UTM to avoid termination.", comment: "VMSessionState")
+        content.body = NSLocalizedString("Switch back to UTM Pro to avoid termination.", comment: "VMSessionState")
         if #available(iOS 15, *) {
             content.interruptionLevel = .timeSensitive
         }
