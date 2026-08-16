@@ -20,9 +20,24 @@ struct VMSettingsAddDeviceMenuView: View {
     @ObservedObject var config: UTMQemuConfiguration
     @Binding var isCreateDriveShown: Bool
     @Binding var isImportDriveShown: Bool
+
+    #if WITH_REMOTE_KVM
+    /// Set when this VM runs on another machine, in which case the menu adds
+    /// hardware to the domain there rather than to a local configuration.
+    var remoteVM: UTMLibvirtVirtualMachine?
+    @EnvironmentObject private var data: UTMData
+    @State private var showRemoteDisk = false
+    @State private var showRemoteNetwork = false
+    #endif
     
-    init(config: UTMQemuConfiguration, isCreateDriveShown: Binding<Bool>? = nil, isImportDriveShown: Binding<Bool>? = nil) {
+    init(config: UTMQemuConfiguration,
+         isCreateDriveShown: Binding<Bool>? = nil,
+         isImportDriveShown: Binding<Bool>? = nil,
+         remoteVM: AnyObject? = nil) {
         self.config = config
+        #if WITH_REMOTE_KVM
+        self.remoteVM = remoteVM as? UTMLibvirtVirtualMachine
+        #endif
         if let isCreateDriveShown = isCreateDriveShown {
             _isCreateDriveShown = isCreateDriveShown
         } else {
@@ -44,6 +59,57 @@ struct VMSettingsAddDeviceMenuView: View {
     }
     
     var body: some View {
+        #if WITH_REMOTE_KVM
+        if #available(iOS 16, macOS 13, *), let remoteVM {
+            remoteMenu(for: remoteVM)
+        } else {
+            localMenu
+        }
+        #else
+        localMenu
+        #endif
+    }
+
+    #if WITH_REMOTE_KVM
+    /// Only what libvirt can actually add to a defined domain.
+    ///
+    /// Displays, serial ports and sound cards would mean rewriting the
+    /// domain's XML, so they are left out rather than offered and ignored.
+    @available(iOS 16, macOS 13, *)
+    @ViewBuilder private func remoteMenu(for vm: UTMLibvirtVirtualMachine) -> some View {
+        Menu {
+            Button {
+                showRemoteDisk = true
+            } label: {
+                Label("Drive", systemImage: "internaldrive")
+            }
+            Button {
+                showRemoteNetwork = true
+            } label: {
+                Label("Network", systemImage: "network")
+            }
+        } label: {
+            Label("New…", systemImage: "plus")
+        }
+        .menuStyle(.borderlessButton)
+        .disabled(vm.state != .stopped)
+        .help(vm.state == .stopped
+              ? "Add hardware to this VM on its host."
+              : "Stop the VM to change its hardware.")
+        .sheet(isPresented: $showRemoteDisk) {
+            if let server = data.libvirtServers.server(withId: vm.domainInfo.serverId) {
+                VMLibvirtDiskAddView(server: server, vm: vm)
+            }
+        }
+        .sheet(isPresented: $showRemoteNetwork) {
+            if let server = data.libvirtServers.server(withId: vm.domainInfo.serverId) {
+                VMLibvirtNetworkAddView(server: server, vm: vm)
+            }
+        }
+    }
+    #endif
+
+    @ViewBuilder private var localMenu: some View {
         Menu {
             Button {
                 let newDisplay = UTMQemuConfigurationDisplay(forArchitecture: config.system.architecture, target: config.system.target)

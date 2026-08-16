@@ -22,6 +22,12 @@ struct VMQEMUSettingsView: View {
     /// Passed down so drive controls that create local files are replaced by a
     /// pointer to the ones that work for a remote host.
     var isRemote: Bool = false
+
+    #if WITH_REMOTE_KVM
+    /// The VM itself when it runs elsewhere, so the hardware menu can add
+    /// devices to the domain on its host.
+    var remoteVM: UTMLibvirtVirtualMachine?
+    #endif
     @EnvironmentObject private var data: UTMData
 
     @State private var infoActive: Bool = true
@@ -170,7 +176,11 @@ struct VMQEMUSettingsView: View {
                     }
                 }
             }
+            #if WITH_REMOTE_KVM
+            VMSettingsAddDeviceMenuView(config: config, remoteVM: remoteVM)
+            #else
             VMSettingsAddDeviceMenuView(config: config)
+            #endif
         }
         Section(header: Text("Drives")) {
             VMDrivesSettingsView(drives: $config.drives,

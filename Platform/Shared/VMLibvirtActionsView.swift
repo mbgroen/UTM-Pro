@@ -29,7 +29,6 @@ struct VMLibvirtActionsView: View {
 
     @EnvironmentObject private var data: UTMData
 
-    @State private var showDisks = false
     @State private var showSnapshots = false
 
     private var server: UTMLibvirtServer? {
@@ -38,13 +37,6 @@ struct VMLibvirtActionsView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Button {
-                showDisks = true
-            } label: {
-                Label("Disks…", systemImage: "internaldrive")
-            }
-            .help("Add a disk from a storage pool, or detach one.")
-
             Button {
                 showSnapshots = true
             } label: {
@@ -65,11 +57,6 @@ struct VMLibvirtActionsView: View {
             Spacer()
         }
         .buttonStyle(.bordered)
-        .sheet(isPresented: $showDisks) {
-            if let server {
-                VMLibvirtDiskListView(server: server, vm: libvirtVM)
-            }
-        }
         .modifier(VMSnapshotsSheetModifier(vm: vm, isPresented: $showSnapshots))
     }
 }

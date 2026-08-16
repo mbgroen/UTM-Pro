@@ -82,7 +82,7 @@ struct VMDrivesSettingsView<Drive: UTMConfigurationDrive>: View {
             }, secondaryButton: .cancel())
         }
         if isRemote {
-            Label("These disks live on the host and are shown for reference. Changes made here are not sent to it — use Disks… from the VM's context menu to add or detach one.",
+            Label("These disks live on the host and are shown for reference. Add or detach one with the New… menu above, or from the VM's context menu.",
                   systemImage: "info.circle")
                 .font(.caption)
                 .foregroundColor(.secondary)

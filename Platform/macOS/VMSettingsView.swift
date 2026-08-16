@@ -38,8 +38,13 @@ struct VMSettingsView<Config: UTMConfiguration>: View {
         NavigationView {
             List {
                 if config is UTMQemuConfiguration {
+                    #if WITH_REMOTE_KVM
                     VMQEMUSettingsView(config: config as! UTMQemuConfiguration,
-                                       isRemote: isRemoteVM)
+                                       isRemote: isRemoteVM,
+                                       remoteVM: vm.wrapped as? UTMLibvirtVirtualMachine)
+                    #else
+                    VMQEMUSettingsView(config: config as! UTMQemuConfiguration)
+                    #endif
                 } else if config is UTMAppleConfiguration {
                     VMAppleSettingsView(config: config as! UTMAppleConfiguration)
                 }

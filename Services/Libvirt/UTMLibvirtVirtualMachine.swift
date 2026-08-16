@@ -303,6 +303,17 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
         update(from: refreshed)
     }
 
+    /// Attaches a network interface to this domain.
+    func addNetworkInterface(source: String, isVirtualNetwork: Bool) async throws {
+        let host = try server.libvirt
+        try await host.attachInterface(toDomain: domainName,
+                                       source: source,
+                                       macAddress: nil,
+                                       isVirtualNetwork: isVirtualNetwork)
+        let refreshed = try await host.domain(named: domainName)
+        update(from: refreshed)
+    }
+
     /// Detaches a disk. The image is left on the host.
     func removeDisk(targetDevice: String) async throws {
         let host = try server.libvirt
