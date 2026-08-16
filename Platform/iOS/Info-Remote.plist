@@ -13,7 +13,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>UTM Pro Remote</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>UTM Pro Remote</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>

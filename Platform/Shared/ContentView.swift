@@ -21,7 +21,17 @@ import IQKeyboardManagerSwift
 #endif
 import TipKit
 
-// on visionOS, there is no text to show more than UTM
+// The application name, in one place.
+//
+// Changing it here covers every title and label in the app. The two Info.plist
+// keys — CFBundleName for the menu bar and About box, CFBundleDisplayName for
+// Finder and the Dock — have to be edited to match, and are the only other
+// places the name appears.
+//
+// Worth a thought before settling on one: a name built on "UTM" reads as an
+// official edition of the upstream project rather than as a fork of it.
+//
+// on visionOS, there is no text to show more than the bare name
 #if WITH_QEMU_TCI && !os(visionOS)
 let productName = "UTM Pro SE"
 #elseif WITH_REMOTE && !os(visionOS)

@@ -22,6 +22,7 @@ struct VMNavigationListView: View {
     @State private var confirmAction: ConfirmAction?
     #if WITH_REMOTE_KVM
     @State private var editingServer: UTMLibvirtServerSettings?
+    @State private var libvirtPresentation: VMLibvirtServerPresentation?
     #endif
 
     var body: some View {
@@ -31,7 +32,7 @@ struct VMNavigationListView: View {
                     listBody
                 }.modifier(VMListModifier())
                 #if WITH_REMOTE_KVM
-                .modifier(VMLibvirtServerSheetCompatModifier(editingServer: $editingServer))
+                .modifier(VMLibvirtServerSheetCompatModifier(editingServer: $editingServer, presentation: $libvirtPresentation))
                 #endif
             } detail: {
                 if let vm = data.selectedVM {
@@ -51,7 +52,7 @@ struct VMNavigationListView: View {
                     listBody
                 }.modifier(VMListModifier())
                 #if WITH_REMOTE_KVM
-                .modifier(VMLibvirtServerSheetCompatModifier(editingServer: $editingServer))
+                .modifier(VMLibvirtServerSheetCompatModifier(editingServer: $editingServer, presentation: $libvirtPresentation))
                 #endif
                 VMPlaceholderView()
             }
@@ -74,7 +75,8 @@ struct VMNavigationListView: View {
                 }
             }
             VMLibvirtServerSections(registry: data.libvirtServers,
-                                    editingServer: $editingServer)
+                                    editingServer: $editingServer,
+                                    presentation: $libvirtPresentation)
         } else {
             localListBody
         }

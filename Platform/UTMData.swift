@@ -472,6 +472,18 @@ enum AlertItem: Identifiable {
     /// Discard changes to VM configuration
     /// - Parameter vm: VM configuration to discard
     func discardChanges(for vm: VMData) throws {
+        #if WITH_REMOTE_KVM
+        // A remote VM has no package to reload from. Discarding its edits
+        // means going back to what the host says, which is a network read —
+        // so it is started here and replaces the projection when it lands,
+        // rather than throwing because there is no local file to reread.
+        if let libvirtVM = vm.wrapped as? UTMLibvirtVirtualMachine {
+            Task {
+                try? await libvirtVM.refreshDomain()
+            }
+            return
+        }
+        #endif
         if let wrapped = vm.wrapped {
             try wrapped.reload(from: nil)
             if uuidHasCollision(with: vm) {

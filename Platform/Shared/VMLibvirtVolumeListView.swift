@@ -26,11 +26,27 @@ struct VMLibvirtVolumeListView: View {
     @State private var volumes: [LibvirtVolume] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var showCreate = false
-    @State private var resizing: LibvirtVolume?
-    @State private var cloning: LibvirtVolume?
-    @State private var deleting: LibvirtVolume?
-    @State private var converting: LibvirtVolume?
+    /// One route, one sheet. Five separate .sheet modifiers on the same view
+    /// leaves SwiftUI honouring one of them and fighting over the rest.
+    @State private var route: Route?
+
+    enum Route: Identifiable {
+        case create
+        case resize(LibvirtVolume)
+        case clone(LibvirtVolume)
+        case convert(LibvirtVolume)
+        case delete(LibvirtVolume)
+
+        var id: String {
+            switch self {
+            case .create: return "create"
+            case .resize(let v): return "resize-\(v.id)"
+            case .clone(let v): return "clone-\(v.id)"
+            case .convert(let v): return "convert-\(v.id)"
+            case .delete(let v): return "delete-\(v.id)"
+            }
+        }
+    }
 
     var body: some View {
         List {
@@ -46,23 +62,23 @@ struct VMLibvirtVolumeListView: View {
                 VMLibvirtVolumeRow(volume: volume, usedBy: server.domainsUsing(volumePath: volume.path))
                     .contextMenu {
                         Button {
-                            resizing = volume
+                            route = .resize(volume)
                         } label: {
                             Label("Resize…", systemImage: "arrow.up.left.and.arrow.down.right")
                         }
                         Button {
-                            cloning = volume
+                            route = .clone(volume)
                         } label: {
                             Label("Duplicate…", systemImage: "doc.on.doc")
                         }
                         Button {
-                            converting = volume
+                            route = .convert(volume)
                         } label: {
                             Label("Convert Format…", systemImage: "arrow.triangle.swap")
                         }
                         Divider()
                         Button(role: .destructive) {
-                            deleting = volume
+                            route = .delete(volume)
                         } label: {
                             Label("Delete…", systemImage: "trash")
                         }
@@ -84,35 +100,24 @@ struct VMLibvirtVolumeListView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    showCreate = true
+                    route = .create
                 } label: {
                     Label("New Volume", systemImage: "plus")
                 }
             }
         }
-        .sheet(isPresented: $showCreate) {
-            VMLibvirtVolumeCreateView(server: server, pool: pool) {
-                await load()
-            }
-        }
-        .sheet(item: $resizing) { volume in
-            VMLibvirtVolumeResizeView(server: server, pool: pool, volume: volume) {
-                await load()
-            }
-        }
-        .sheet(item: $cloning) { volume in
-            VMLibvirtVolumeCloneView(server: server, pool: pool, volume: volume) {
-                await load()
-            }
-        }
-        .sheet(item: $converting) { volume in
-            VMLibvirtVolumeConvertView(server: server, pool: pool, volume: volume) {
-                await load()
-            }
-        }
-        .sheet(item: $deleting) { volume in
-            VMLibvirtVolumeDeleteView(server: server, pool: pool, volume: volume) {
-                await load()
+        .sheet(item: $route) { route in
+            switch route {
+            case .create:
+                VMLibvirtVolumeCreateView(server: server, pool: pool) { await load() }
+            case .resize(let volume):
+                VMLibvirtVolumeResizeView(server: server, pool: pool, volume: volume) { await load() }
+            case .clone(let volume):
+                VMLibvirtVolumeCloneView(server: server, pool: pool, volume: volume) { await load() }
+            case .convert(let volume):
+                VMLibvirtVolumeConvertView(server: server, pool: pool, volume: volume) { await load() }
+            case .delete(let volume):
+                VMLibvirtVolumeDeleteView(server: server, pool: pool, volume: volume) { await load() }
             }
         }
         .task {

@@ -21,12 +21,33 @@ import SwiftUI
 struct VMLibvirtServerSections: View {
     @ObservedObject var registry: UTMLibvirtServerRegistry
     @Binding var editingServer: UTMLibvirtServerSettings?
+    @Binding var presentation: VMLibvirtServerPresentation?
 
     var body: some View {
         ForEach(registry.servers) { server in
             VMLibvirtServerSection(server: server,
                                    registry: registry,
-                                   editingServer: $editingServer)
+                                   editingServer: $editingServer,
+                                   presentation: $presentation)
+        }
+    }
+}
+
+/// What a server row wants shown.
+///
+/// Held by the sidebar rather than the row. A row lives inside a ForEach that
+/// is rebuilt whenever any server publishes a change, and a sheet presented
+/// from there is torn down and presented again with it — which is exactly what
+/// the flickering was.
+@MainActor
+enum VMLibvirtServerPresentation: Identifiable {
+    case storage(UTMLibvirtServer)
+    case createVM(UTMLibvirtServer)
+
+    var id: String {
+        switch self {
+        case .storage(let server): return "storage-\(server.id)"
+        case .createVM(let server): return "create-\(server.id)"
         }
     }
 }
@@ -40,8 +61,7 @@ struct VMLibvirtServerSection: View {
     @EnvironmentObject private var data: UTMData
     @State private var isExpanded: Bool = true
     @State private var confirmRemove: Bool = false
-    @State private var showStorage: Bool = false
-    @State private var showCreateVM: Bool = false
+    @Binding var presentation: VMLibvirtServerPresentation?
 
     var body: some View {
         Section(header: header) {
@@ -77,12 +97,6 @@ struct VMLibvirtServerSection: View {
                 hostKeyPrompt(fingerprint: fingerprint, isChange: isChange)
             }
         }
-        .sheet(isPresented: $showStorage) {
-            VMLibvirtStorageView(server: server)
-        }
-        .sheet(isPresented: $showCreateVM) {
-            VMLibvirtCreateView(server: server)
-        }
         .confirmationDialog("Remove this server?",
                             isPresented: $confirmRemove,
                             titleVisibility: .visible) {
@@ -108,12 +122,12 @@ struct VMLibvirtServerSection: View {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
                     Button {
-                        showCreateVM = true
+                        presentation = .createVM(server)
                     } label: {
                         Label("New Virtual Machine…", systemImage: "plus.circle")
                     }
                     Button {
-                        showStorage = true
+                        presentation = .storage(server)
                     } label: {
                         Label("Storage…", systemImage: "externaldrive")
                     }

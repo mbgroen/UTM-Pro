@@ -60,7 +60,7 @@ struct UTMApp: App {
     var newBody: some Scene {
         Window("UTM Library", id: "home") {
             homeWindow
-                .navigationTitle("UTM")
+                .navigationTitle(productName)
         }.commands {
             VMCommands()
         }

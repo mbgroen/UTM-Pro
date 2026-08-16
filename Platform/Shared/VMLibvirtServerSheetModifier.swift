@@ -20,6 +20,7 @@ import SwiftUI
 @available(iOS 16, macOS 13, *)
 struct VMLibvirtServerSheetModifier: ViewModifier {
     @Binding var editingServer: UTMLibvirtServerSettings?
+    @Binding var presentation: VMLibvirtServerPresentation?
 
     @EnvironmentObject private var data: UTMData
 
@@ -35,8 +36,18 @@ struct VMLibvirtServerSheetModifier: ViewModifier {
                     .help("Add a remote KVM server")
                 }
             }
+            // One sheet modifier, not several. Stacking them on a single
+            // view makes SwiftUI honour only one and fight over the rest.
             .sheet(item: $editingServer) { settings in
                 UTMLibvirtServerEditSheet(settings: settings)
+            }
+            .sheet(item: $presentation) { route in
+                switch route {
+                case .storage(let server):
+                    VMLibvirtStorageView(server: server)
+                case .createVM(let server):
+                    VMLibvirtCreateView(server: server)
+                }
             }
             .task {
                 // Reconnect saved servers on launch so the sidebar is
@@ -105,10 +116,12 @@ extension UTMLibvirtServerSettings {
 /// availability check lives here rather than at every call site.
 struct VMLibvirtServerSheetCompatModifier: ViewModifier {
     @Binding var editingServer: UTMLibvirtServerSettings?
+    @Binding var presentation: VMLibvirtServerPresentation?
 
     func body(content: Content) -> some View {
         if #available(iOS 16, macOS 13, *) {
-            content.modifier(VMLibvirtServerSheetModifier(editingServer: $editingServer))
+            content.modifier(VMLibvirtServerSheetModifier(editingServer: $editingServer,
+                                                          presentation: $presentation))
         } else {
             content
         }

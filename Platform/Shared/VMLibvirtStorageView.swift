@@ -24,8 +24,19 @@ struct VMLibvirtStorageView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var showCreatePool = false
-    @State private var deletingPool: LibvirtPool?
+    @State private var route: Route?
+
+    enum Route: Identifiable {
+        case createPool
+        case deletePool(LibvirtPool)
+
+        var id: String {
+            switch self {
+            case .createPool: return "create"
+            case .deletePool(let pool): return "delete-\(pool.id)"
+            }
+        }
+    }
     @State private var errorMessage: String?
     @State private var isRefreshing = false
 
@@ -81,17 +92,19 @@ struct VMLibvirtStorageView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        showCreatePool = true
+                        route = .createPool
                     } label: {
                         Label("Add Pool", systemImage: "plus")
                     }
                 }
             }
-            .sheet(isPresented: $showCreatePool) {
-                VMLibvirtPoolCreateView(server: server)
-            }
-            .sheet(item: $deletingPool) { pool in
-                VMLibvirtPoolDeleteView(server: server, pool: pool)
+            .sheet(item: $route) { route in
+                switch route {
+                case .createPool:
+                    VMLibvirtPoolCreateView(server: server)
+                case .deletePool(let pool):
+                    VMLibvirtPoolDeleteView(server: server, pool: pool)
+                }
             }
             .task {
                 await refresh()
@@ -131,7 +144,7 @@ struct VMLibvirtStorageView: View {
         .help("Whether the host brings this pool online at boot.")
 
         Button(role: .destructive) {
-            deletingPool = pool
+            route = .deletePool(pool)
         } label: {
             Label("Remove Pool…", systemImage: "trash")
         }
