@@ -81,7 +81,6 @@ struct VMLibvirtStorageView: View {
             .navigationDestination(for: LibvirtPool.self) { pool in
                 VMLibvirtVolumeListView(server: server, pool: pool)
             }
-            .frame(minWidth: 520, minHeight: 460)
             .navigationTitle("Storage on \(server.settings.displayName)")
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -106,9 +105,12 @@ struct VMLibvirtStorageView: View {
                     VMLibvirtPoolDeleteView(server: server, pool: pool)
                 }
             }
-            .task {
-                await refresh()
-            }
+        }
+        // On the stack itself, so every pushed view keeps the sheet's size
+        // instead of collapsing to its own.
+        .frame(minWidth: 560, idealWidth: 680, minHeight: 480, idealHeight: 560)
+        .task {
+            await refresh()
         }
     }
 

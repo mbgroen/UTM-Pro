@@ -59,30 +59,27 @@ struct VMLibvirtVolumeListView: View {
             }
 
             ForEach(volumes) { volume in
-                VMLibvirtVolumeRow(volume: volume, usedBy: server.domainsUsing(volumePath: volume.path))
-                    .contextMenu {
-                        Button {
-                            route = .resize(volume)
-                        } label: {
-                            Label("Resize…", systemImage: "arrow.up.left.and.arrow.down.right")
-                        }
-                        Button {
-                            route = .clone(volume)
-                        } label: {
-                            Label("Duplicate…", systemImage: "doc.on.doc")
-                        }
-                        Button {
-                            route = .convert(volume)
-                        } label: {
-                            Label("Convert Format…", systemImage: "arrow.triangle.swap")
-                        }
-                        Divider()
-                        Button(role: .destructive) {
-                            route = .delete(volume)
-                        } label: {
-                            Label("Delete…", systemImage: "trash")
-                        }
+                HStack {
+                    VMLibvirtVolumeRow(volume: volume, usedBy: server.domainsUsing(volumePath: volume.path))
+                    Spacer()
+                    Menu {
+                        volumeActions(for: volume)
+                    } label: {
+                        Label("Volume Options", systemImage: "ellipsis.circle")
+                            .labelStyle(.iconOnly)
                     }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                }
+                    .contextMenu {
+                        volumeActions(for: volume)
+                    }
+            }
+
+            Button {
+                route = .create
+            } label: {
+                Label("New Volume…", systemImage: "plus")
             }
 
             if let errorMessage {
@@ -122,6 +119,30 @@ struct VMLibvirtVolumeListView: View {
         }
         .task {
             await load()
+        }
+    }
+
+    @ViewBuilder private func volumeActions(for volume: LibvirtVolume) -> some View {
+        Button {
+            route = .resize(volume)
+        } label: {
+            Label("Resize…", systemImage: "arrow.up.left.and.arrow.down.right")
+        }
+        Button {
+            route = .clone(volume)
+        } label: {
+            Label("Duplicate…", systemImage: "doc.on.doc")
+        }
+        Button {
+            route = .convert(volume)
+        } label: {
+            Label("Convert Format…", systemImage: "arrow.triangle.swap")
+        }
+        Divider()
+        Button(role: .destructive) {
+            route = .delete(volume)
+        } label: {
+            Label("Delete…", systemImage: "trash")
         }
     }
 
