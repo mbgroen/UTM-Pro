@@ -9,9 +9,7 @@ UTM is a full featured system emulator and virtual machine host for iOS and macO
 **UTM Pro** is a fork of [UTM][6] that adds management of **remote libvirt/KVM hosts** alongside local virtual machines — built for driving an [OpenMediaVault][7] NAS running the `openmediavault-kvm` plugin from the same window as your local VMs. See [Remote KVM management](#remote-kvm-management) below.
 
 <p align="center">
-  <img width="450px" alt="UTM running on an iPhone" src="screen.png">
-  <br>
-  <img width="450px" alt="UTM running on a MacBook" src="screenmac.png">
+  <img width="700px" alt="The UTM Pro library window" src="Documentation/images/welcome.png">
 </p>
 
 ## Features
@@ -58,6 +56,10 @@ else is installed on the server.
 
 ### Authentication
 
+<p align="center">
+  <img width="600px" alt="Adding a remote libvirt host" src="Documentation/images/add-server.png">
+</p>
+
 Servers authenticate with an **Ed25519** or **ECDSA** SSH key, or a password.
 RSA keys are not supported — the SSH implementation UTM Pro uses does not
 implement RSA at all. If that is all you have, use **Generate a New Key** in
@@ -97,6 +99,19 @@ with the VM off silently did nothing.
 
 Whether a snapshot captured memory is shown in the list, because it decides
 what restoring does: resume mid-execution, or boot from that point.
+
+Save and restore are also on the console window's toolbar, so you can take one
+without leaving the guest.
+
+### Settings
+
+<p align="center">
+  <img width="600px" alt="Remote host settings" src="Documentation/images/settings-remote-hosts.png">
+</p>
+
+Saved servers do not connect on launch — a stored credential is not a standing
+instruction to log in. How often connected servers are re-read, and whether new
+servers tunnel their console, are set here rather than compiled in.
 
 ## UTM SE
 
@@ -168,7 +183,7 @@ Continuous integration hosting is provided by [MacStadium](https://www.macstadiu
 [<img src="https://uploads-ssl.webflow.com/5ac3c046c82724970fc60918/5c019d917bba312af7553b49_MacStadium-developerlogo.png" alt="MacStadium logo" width="250">](https://www.macstadium.com)
 
   [1]: https://github.com/utmapp/UTM/actions?query=event%3Arelease+workflow%3ABuild
-  [2]: screen.png
+  [2]: Documentation/images/welcome.png
   [3]: https://github.com/ktemkin/qemu/blob/with_tcti/tcg/aarch64-tcti/README.md
   [4]: https://github.com/ish-app/ish
   [5]: https://github.com/holzschu/a-shell
