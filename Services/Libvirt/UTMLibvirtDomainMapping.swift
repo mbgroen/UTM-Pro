@@ -139,6 +139,7 @@ extension UTMQemuConfiguration {
             drive.isExternal = disk.isCDROM
             drive.isReadOnly = disk.isReadOnly
             drive.imageType = disk.isCDROM ? .cd : .disk
+            drive.interface = Self.driveInterface(forBus: disk.bus)
             return drive
         }
 
@@ -156,6 +157,28 @@ extension UTMQemuConfiguration {
         }
 
         return config
+    }
+
+    /// Maps a libvirt disk bus onto the interface UTM names it by.
+    ///
+    /// Without this the drive falls back to `.none`, which UTM shows as
+    /// "None (Advanced)" — its way of saying the disk is attached by hand
+    /// through custom QEMU arguments. That is never true of a libvirt domain:
+    /// the bus is right there in the XML as `<target bus='virtio'/>`.
+    static func driveInterface(forBus bus: String?) -> QEMUDriveInterface {
+        // UTM has no SATA case, so a SATA disk is shown as IDE. Both are
+        // "the emulated non-virtio disk controller" to a reader, and this is
+        // a display model — the real bus stays whatever the domain XML says.
+        switch bus?.lowercased() {
+        case "virtio": return .virtio
+        case "sata", "ide": return .ide
+        case "scsi": return .scsi
+        case "usb": return .usb
+        case "nvme": return .nvme
+        case "sd": return .sd
+        case "floppy": return .floppy
+        default: return .none
+        }
     }
 
     /// Refreshes an existing projection in place, so views observing the
