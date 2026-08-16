@@ -45,6 +45,10 @@ struct UTMLibvirtDomainInfo {
     /// Host paths of the domain's disks, indexed by guest device name.
     var diskPaths: [String: String]
 
+    /// Bridge or network name per interface, in order, so a save can tell
+    /// which attachment actually changed.
+    var interfaceSources: [String?] { interfaces.map(\.source) }
+
     /// Guest device names already in use, so a new disk gets a free one.
     var diskTargets: [String]
 
@@ -138,8 +142,17 @@ extension UTMQemuConfiguration {
             return drive
         }
 
-        config.networks = domain.interfaces.map { _ in
-            UTMQemuConfigurationNetwork()
+        // Populated rather than left blank: an empty entry showed the VM as
+        // having a network but told the user nothing about which one, and gave
+        // an edit nothing to change.
+        config.networks = domain.interfaces.map { interface in
+            var network = UTMQemuConfigurationNetwork()
+            network.mode = .bridged
+            network.bridgeInterface = interface.source
+            if let mac = interface.macAddress {
+                network.macAddress = mac
+            }
+            return network
         }
 
         return config
@@ -162,5 +175,15 @@ extension UTMQemuConfiguration {
         system.cpuCount = domain.vcpuCount
         system.memorySize = Int(domain.memoryBytes / (1024 * 1024))
         self.system = system
+
+        self.networks = domain.interfaces.map { interface in
+            var network = UTMQemuConfigurationNetwork()
+            network.mode = .bridged
+            network.bridgeInterface = interface.source
+            if let mac = interface.macAddress {
+                network.macAddress = mac
+            }
+            return network
+        }
     }
 }

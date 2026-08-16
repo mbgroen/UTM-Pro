@@ -91,6 +91,30 @@ enum CreateTest {
                     throw TestFailure("interface not attached to \(bridge)")
                 }
             }
+            // USB redirection needs channels declared in the domain, and a
+            // guest defined without them can never accept a device.
+            let xml = try await libvirt.domainXML(named: name)
+            let redirCount = xml.components(separatedBy: "<redirdev").count - 1
+            guard redirCount >= 2 else {
+                throw TestFailure("expected 2 USB redirection channels, found \(redirCount)")
+            }
+            print("  USB redirection channels: \(redirCount) ✓")
+
+            // Moving an interface between bridges must keep the MAC, or the
+            // guest loses its DHCP lease.
+            if case .bridge = network, let mac = created.interfaces.first?.macAddress {
+                try await libvirt.detachInterface(fromDomain: name, macAddress: mac)
+                try await libvirt.attachInterface(toDomain: name, source: "docker0", macAddress: mac)
+                let moved = try await libvirt.domain(named: name)
+                guard moved.interfaces.first?.source == "docker0" else {
+                    throw TestFailure("interface did not move, source is \(moved.interfaces.first?.source ?? "nil")")
+                }
+                guard moved.interfaces.first?.macAddress == mac else {
+                    throw TestFailure("MAC changed when moving the interface")
+                }
+                print("  interface moved to docker0 keeping MAC \(mac) ✓")
+            }
+
             print("  defined: \(created.vcpuCount) vcpu, "
                   + "\(created.memoryBytes / (1024 * 1024)) MiB, "
                   + "disk \(created.disks.map(\.target).joined(separator: ",")), "

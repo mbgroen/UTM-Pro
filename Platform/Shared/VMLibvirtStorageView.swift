@@ -40,9 +40,13 @@ struct VMLibvirtStorageView: View {
                 }
                 ForEach(server.pools) { pool in
                     Section {
-                        NavigationLink {
-                            VMLibvirtVolumeListView(server: server, pool: pool)
-                        } label: {
+                        // Value-based, so the volume list is built when the
+                        // user navigates rather than when the row appears.
+                        // The closure form constructed every pool's list up
+                        // front, and each one immediately fetched its volumes
+                        // — one redraw per pool, which is what made the window
+                        // flicker on open and close.
+                        NavigationLink(value: pool) {
                             VMLibvirtPoolRow(pool: pool)
                         }
                         .disabled(!pool.isActive)
@@ -62,6 +66,9 @@ struct VMLibvirtStorageView: View {
                         }
                     }
                 }
+            }
+            .navigationDestination(for: LibvirtPool.self) { pool in
+                VMLibvirtVolumeListView(server: server, pool: pool)
             }
             .frame(minWidth: 520, minHeight: 460)
             .navigationTitle("Storage on \(server.settings.displayName)")
@@ -191,6 +198,18 @@ struct VMLibvirtPoolRow: View {
                     .foregroundColor(.secondary)
                     .lineLimit(1)
                     .truncationMode(.head)
+            }
+
+            // Says there is something to open. Without it the row reads as a
+            // summary and people do not think to click it.
+            if pool.isActive {
+                Label("Show volumes", systemImage: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.accentColor)
+            } else {
+                Text("Start the pool to see its volumes")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
         .padding(.vertical, 2)

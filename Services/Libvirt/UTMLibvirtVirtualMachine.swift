@@ -216,6 +216,8 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
             try await host.setDescription(ofDomain: original.domainName, text: notes)
         }
 
+        try await applyNetworkChanges(host: host, original: original)
+
         // Renaming last: everything above addresses the domain by its old
         // name, and libvirt has no transaction to roll back into.
         let newName = config.information.name
@@ -225,6 +227,29 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
 
         let refreshed = try await host.domain(named: newName.isEmpty ? original.domainName : newName)
         update(from: refreshed)
+    }
+
+    /// Re-points interfaces whose bridge changed.
+    ///
+    /// libvirt has no "change the bridge" operation: an interface is detached
+    /// by MAC and a new one attached. Only interfaces that actually moved are
+    /// touched, because detaching and re-attaching an unchanged one would give
+    /// it a new MAC and break the guest's DHCP lease for no reason.
+    private func applyNetworkChanges(host: LibvirtHost, original: UTMLibvirtDomainInfo) async throws {
+        let originalSources = original.interfaceSources
+        for (index, network) in config.networks.enumerated() {
+            guard index < originalSources.count else { continue }
+            guard let newSource = network.bridgeInterface,
+                  !newSource.isEmpty,
+                  newSource != originalSources[index] else { continue }
+            guard index < original.interfaces.count,
+                  let mac = original.interfaces[index].macAddress else { continue }
+
+            try await host.detachInterface(fromDomain: original.domainName, macAddress: mac)
+            try await host.attachInterface(toDomain: original.domainName,
+                                           source: newSource,
+                                           macAddress: mac)
+        }
     }
 
     // MARK: - Disks

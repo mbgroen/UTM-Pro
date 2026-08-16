@@ -194,6 +194,16 @@ public struct LibvirtDomainTemplate: Sendable {
         xml.empty("model", ["type": "virtio", "heads": "1", "primary": "yes"])
         xml.close()
 
+        // USB redirection channels. SPICE can only forward a device if the
+        // domain has a channel to forward it over, and those must be declared
+        // up front — a guest defined without them simply cannot accept a USB
+        // device no matter what the client offers. Two, matching what the
+        // OpenMediaVault plugin defines, so two devices can be attached at
+        // once.
+        for _ in 0..<2 {
+            xml.empty("redirdev", ["bus": "usb", "type": "spicevmc"])
+        }
+
         xml.empty("memballoon", ["model": "virtio"])
 
         xml.open("rng", ["model": "virtio"])

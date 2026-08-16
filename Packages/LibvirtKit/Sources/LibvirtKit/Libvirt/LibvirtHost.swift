@@ -387,6 +387,40 @@ public actor LibvirtHost {
         }
     }
 
+    // MARK: - Interfaces
+
+    /// Attaches a network interface to a domain.
+    ///
+    /// The MAC is passed explicitly so an interface can be moved between
+    /// bridges without the guest seeing a new card — a fresh MAC would drop
+    /// its DHCP lease and any address reservation made for it.
+    public func attachInterface(toDomain name: String,
+                                source: String,
+                                macAddress: String?,
+                                isVirtualNetwork: Bool = false,
+                                model: String = "virtio") async throws {
+        try await virshChecked {
+            $0.flag("attach-interface")
+            $0.option("--domain", name)
+            $0.option("--type", isVirtualNetwork ? "network" : "bridge")
+            $0.option("--source", source)
+            $0.option("--model", model)
+            $0.option("--mac", macAddress)
+            $0.flag("--persistent")
+        }
+    }
+
+    /// Detaches the interface with this MAC.
+    public func detachInterface(fromDomain name: String, macAddress: String) async throws {
+        try await virshChecked {
+            $0.flag("detach-interface")
+            $0.option("--domain", name)
+            $0.option("--type", "bridge")
+            $0.option("--mac", macAddress)
+            $0.flag("--persistent")
+        }
+    }
+
     // MARK: - Disks
 
     /// Attaches a disk image to a domain.
