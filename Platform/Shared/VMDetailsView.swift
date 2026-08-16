@@ -103,11 +103,25 @@ struct VMDetailsView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         #if os(macOS)
+                        #if WITH_REMOTE_KVM
+                        // This is the layout a VM without notes gets, which is
+                        // most of them — putting the remote actions only in the
+                        // branch above meant they were invisible for exactly
+                        // the VMs people were looking at.
+                        if #available(macOS 13, *), let libvirtVM = vm.wrapped as? UTMLibvirtVirtualMachine {
+                            VMLibvirtActionsView(vm: vm, libvirtVM: libvirtVM)
+                        } else if let appleVM = vm.wrapped as? UTMAppleVirtualMachine {
+                            VMAppleRemovableDrivesView(vm: vm, config: appleVM.config, registryEntry: appleVM.registryEntry)
+                        } else if let qemuVM = vm.wrapped as? UTMQemuVirtualMachine {
+                            VMRemovableDrivesView(vm: vm, config: qemuVM.config)
+                        }
+                        #else
                         if let appleVM = vm.wrapped as? UTMAppleVirtualMachine {
                             VMAppleRemovableDrivesView(vm: vm, config: appleVM.config, registryEntry: appleVM.registryEntry)
                         } else if let qemuVM = vm.wrapped as? UTMQemuVirtualMachine {
                             VMRemovableDrivesView(vm: vm, config: qemuVM.config)
                         }
+                        #endif
                         #else
                         let qemuConfig = vm.config as! UTMQemuConfiguration
                         VMRemovableDrivesView(vm: vm, config: qemuConfig)

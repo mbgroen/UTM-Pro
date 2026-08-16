@@ -92,7 +92,7 @@ struct VMLibvirtDiskAddView: View {
                 }
             }
             .formStyle(.grouped)
-            .frame(minWidth: 460, minHeight: 380)
+            .frame(minWidth: 520, idealWidth: 600, minHeight: 420, idealHeight: 500)
             .navigationTitle("Add Disk")
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)

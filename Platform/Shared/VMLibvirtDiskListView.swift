@@ -83,6 +83,12 @@ struct VMLibvirtDiskListView: View {
                             }
                         }
                     }
+                    Button {
+                        showAdd = true
+                    } label: {
+                        Label("Add Disk…", systemImage: "plus")
+                    }
+                    .disabled(vm.state != .stopped)
                 } header: {
                     Text("Disks")
                 } footer: {
@@ -106,7 +112,6 @@ struct VMLibvirtDiskListView: View {
                     }
                 }
             }
-            .frame(minWidth: 480, minHeight: 360)
             .navigationTitle("\(vm.domainName) Disks")
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -149,6 +154,7 @@ struct VMLibvirtDiskListView: View {
                 }
             }
         }
+        .frame(minWidth: 520, idealWidth: 620, minHeight: 380, idealHeight: 440)
     }
 
     private func detach(_ disk: DiskEntry) {
