@@ -40,6 +40,28 @@ let productName = "UTM Pro Remote"
 let productName = "UTM Pro"
 #endif
 
+/// Where the app sends people for help.
+///
+/// The guide ships in this repository rather than on the upstream docs site,
+/// because half of what this fork does — remote hosts, snapshots, storage —
+/// is not documented there and never will be.
+enum ProductLink {
+    private static let repository = "https://github.com/mbgroen/UTM-Pro"
+
+    static let userGuide = URL(string: "\(repository)/blob/main/Documentation/Guide/README.md")!
+    static let remoteKVMGuide = URL(string: "\(repository)/blob/main/Documentation/RemoteKVM.md")!
+    static let debianGuide = URL(string: "\(repository)/blob/main/Documentation/Guide/guides/debian.md")!
+    static let ubuntuGuide = URL(string: "\(repository)/blob/main/Documentation/Guide/guides/ubuntu.md")!
+    static let windowsGuide = URL(string: "\(repository)/blob/main/Documentation/Guide/guides/windows.md")!
+    static let rosettaGuide = URL(string: "\(repository)/blob/main/Documentation/Guide/advanced/rosetta.md")!
+    static let issues = URL(string: "\(repository)/issues")!
+    static let licenses = URL(string: "\(repository)/blob/main/LICENSE")!
+
+    /// Upstream's, and genuinely useful — it is a catalogue of prebuilt VMs,
+    /// not documentation, so there is nothing to fork.
+    static let gallery = URL(string: "https://mac.getutm.app/gallery/")!
+}
+
 struct ContentView: View {
     @State private var editMode = false
     @EnvironmentObject private var data: UTMData

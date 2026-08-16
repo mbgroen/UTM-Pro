@@ -60,11 +60,11 @@ struct VMWizardOSLinuxView: View {
             }
             if wizardState.bootDevice != .kernel {
                 if wizardState.useAppleVirtualization {
-                    Link(destination: URL(string: "https://docs.getutm.app/guides/debian/")!) {
+                    Link(destination: ProductLink.debianGuide) {
                         Label("Debian Install Guide", systemImage: "link")
                     }.buttonStyle(.borderless)
                 } else {
-                    Link(destination: URL(string: "https://docs.getutm.app/guides/ubuntu/")!) {
+                    Link(destination: ProductLink.ubuntuGuide) {
                         Label("Ubuntu Install Guide", systemImage: "link")
                     }.buttonStyle(.borderless)
                 }
@@ -74,7 +74,7 @@ struct VMWizardOSLinuxView: View {
             if #available(macOS 13, *), wizardState.useAppleVirtualization {
                 Section {
                     Toggle("Enable Rosetta (x86_64 Emulation)", isOn: $wizardState.linuxHasRosetta)
-                    Link(destination: URL(string: "https://docs.getutm.app/advanced/rosetta/")!) {
+                    Link(destination: ProductLink.rosettaGuide) {
                         Label("Installation Instructions", systemImage: "link")
                     }.buttonStyle(.borderless)
                 } header: {

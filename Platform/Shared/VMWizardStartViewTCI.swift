@@ -54,7 +54,7 @@ struct VMWizardStartViewTCI: View {
                         Image(systemName: "doc")
                     }
                 }
-                Link(destination: URL(string: "https://mac.getutm.app/gallery/")!) {
+                Link(destination: ProductLink.gallery) {
                     Label {
                         Text("Download prebuilt from UTM Gallery…")
                     } icon: {

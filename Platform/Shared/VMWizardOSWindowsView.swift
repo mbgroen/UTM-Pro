@@ -55,7 +55,7 @@ struct VMWizardOSWindowsView: View {
                         Label("Fetch latest Windows installer…", systemImage: "link")
                     }.buttonStyle(.link)
                     #endif
-                    Link(destination: URL(string: "https://docs.getutm.app/guides/windows/")!) {
+                    Link(destination: ProductLink.windowsGuide) {
                         Label("Windows Install Guide", systemImage: "link")
                     }.buttonStyle(.borderless)
                 }

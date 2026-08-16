@@ -114,7 +114,7 @@ struct VMWizardStartView: View {
                 #if os(macOS)
                 .buttonStyle(.link)
                 #endif
-                Link(destination: URL(string: "https://mac.getutm.app/gallery/")!) {
+                Link(destination: ProductLink.gallery) {
                     Label {
                         Text("Download prebuilt from UTM Gallery…")
                     } icon: {

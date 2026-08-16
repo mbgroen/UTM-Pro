@@ -37,21 +37,21 @@ struct VMCommands: Commands {
             Button(action: { NotificationCenter.default.post(name: NSNotification.ShowReleaseNotes, object: nil) }, label: {
                 Text("What's New")
             }).keyboardShortcut(KeyEquivalent("1"), modifiers: [.command, .control])
-            Button(action: { openLink("https://mac.getutm.app/gallery/") }, label: {
-                Text("Virtual Machine Gallery")
+            Button(action: { openURL(ProductLink.userGuide) }, label: {
+                Text("User Guide")
             }).keyboardShortcut(KeyEquivalent("2"), modifiers: [.command, .control])
-            Button(action: { openLink("https://docs.getutm.app/") }, label: {
-                Text("Support")
+            Button(action: { openURL(ProductLink.gallery) }, label: {
+                Text("Virtual Machine Gallery")
             }).keyboardShortcut(KeyEquivalent("3"), modifiers: [.command, .control])
-            Button(action: { openLink("https://mac.getutm.app/licenses/") }, label: {
-                Text("License")
+            Button(action: { openURL(ProductLink.issues) }, label: {
+                Text("Report an Issue")
             }).keyboardShortcut(KeyEquivalent("4"), modifiers: [.command, .control])
+            Button(action: { openURL(ProductLink.licenses) }, label: {
+                Text("License")
+            }).keyboardShortcut(KeyEquivalent("5"), modifiers: [.command, .control])
         }
     }
     
-    private func openLink(_ url: String) {
-        openURL(URL(string: url)!)
-    }
 }
 
 extension NSNotification {

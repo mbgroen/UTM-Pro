@@ -112,6 +112,15 @@ Builds are attached to each [release][8] as a downloadable asset. They are
 unsigned, so macOS Gatekeeper will refuse the first launch: right-click the app
 and choose Open, or clear the quarantine attribute.
 
+## Documentation
+
+The **[User Guide](Documentation/Guide/README.md)** covers both halves of the
+app: the pages on [remote hosts](Documentation/Guide/remote-hosts/remote-hosts.md),
+[snapshots](Documentation/Guide/remote-hosts/snapshots.md) and
+[storage](Documentation/Guide/remote-hosts/storage.md) describe what this fork
+adds, and the rest is adapted from the UTM documentation so that everything is
+in one place.
+
 ## Development
 
 ### [macOS Development](Documentation/MacDevelopment.md)

@@ -1,0 +1,97 @@
+# Windows 11
+
+**macOS**
+
+This guide will help you create a Windows 11 virtual machine from a fresh install.
+
+## Obtain Windows
+
+The easiest way to obtain a Windows installer ISO is with CrystalFetch on macOS, a free utility for legally obtaining the newest Windows builds from Microsoft.
+
+[ Download on the App Store](https://apps.apple.com/app/crystalfetch-iso-downloader/id6454431289)
+[Download from GitHub](https://github.com/TuringSoftware/CrystalFetch/releases/latest/download/CrystalFetch.dmg)
+
+Alternatively, you can also download an older ISO directly from Microsoft (you may have to use Firefox or Chrome to download as Microsoft's website sometimes does not work properly with Safari):
+
+* [Download Windows 11 for Intel Macs](https://www.microsoft.com/en-us/software-download/windows11)
+* [Download Windows 11 for Apple Silicon Macs](https://www.microsoft.com/en-us/software-download/windows11arm64)
+
+Note that regardless of how you obtain the Windows installer, you must have a valid license from Microsoft to run Windows.
+
+## Instructions
+
+1. Use CrystalFetch to download the latest installer ISO.
+2. Open UTM Pro and click the "+" button to open the VM creation wizard.
+3. Select "Virtualize".
+4. Select "Windows".
+5. Pick the amount of RAM and CPU cores you wish to give access to the VM. Press "Continue".
+6. Make "Install Windows 10 or higher" is *checked*. Also make sure "Install drivers and SPICE tools" is *checked*. Press "Browse" and select the ISO you built in step 1.
+7. Specify the maximum amount of drive space to allocate. Press "Continue".
+8. If you have a directory you want to mount in the VM, you can select it here. Alternatively, you can skip this and select the directory later from the VM window's toolbar. The shared directory will be available after installing SPICE tools (see below). Press "Continue".
+9. Press "Save" to create the VM. Wait for the guest tools to finish downloading and press the Run button to start the VM.
+10. Press any key to start the Windows installer and follow the instructions on screen. If you have issues with the mouse, press the mouse capture button in the toolbar to send mouse input directly. Press Control+Option together to exit mouse capture mode. Sometimes, due to driver issues, you can enter and exit capture mode and the mouse cursor works normally again.
+
+### Installing the Microsoft Store and UWP apps (optional)
+
+**WIP**
+
+On the latest pre-release builds the Microsoft Store should be installed automatically. Older versions can follow [this guide](https://dabigblob.github.io/ms-store-arm64/) or check [this issue](https://github.com/utmapp/UTM/issues/3884) for more information.
+
+## Troubleshooting
+
+### Boots into EFI shell instead of Windows installer
+
+First, make sure that you pressed any key during boot to enter the installer. Also, make sure you generated the right ISO for your architecture. Note that **arm64** is for Apple Silicon and **amd64** is for Intel.
+
+### Installer crashes with BSOD `SYSTEM_THREAD_EXCEPTION_NOT_HANDLED`
+
+You are using a version of Windows that is too old. The build number should be 21390 or higher.
+
+### "This PC can't run Windows 11"
+
+If you get this message trying to install Windows 11, there can be a number of possible reasons.
+
+#### Secure Boot
+
+On newer versions of UTM Pro, Secure Boot and TPM should be enabled automatically. You can also enable it manually in Settings under [QEMU](../settings-qemu/qemu.md#tpm-20-device). If you are on an older version of UTM Pro, you can disable the checks in the Windows installer:
+
+1. Press **Shift+F10** to open Command Prompt and type in `regedit.exe` to launch Registry Editor.
+2. Navigate to **HKEY_LOCAL_MACHINE\SYSTEM\Setup**
+3. Right click on the **Setup** key on the left side and choose New -> Key.
+4. Create a key named `LabConfig`
+5. Select the **LabConfig** key.
+6. Create two new values: Choose New -> DWORD (32-bit) and create `BypassTPMCheck` and `BypassSecureBootCheck`. Set both values to 1.
+7. Close out of Registry Editor and Command Prompt.
+8. In setup, press the back button and then Next to continue installation.
+
+#### Core count
+
+Windows require at least 2 cores to install. If you are installing x86_64 Windows on an Intel Mac or ARM64 Windows on an Apple Silicon Mac, the default setting will be to use the number of cores on your system. However, if you are installing x86_64 Windows on an Apple Silicon Mac, the default setting is to use only a single core. This is because due to memory ordering requirements, emulating multiple x86_64 cores on an ARM64 system will be done on a single core and thus reduce performance.
+
+At the cost of correctness, you can force multiple cores by going to the [System](../settings-qemu/system.md#cpu) settings and changing the number of cores to 2 or higher and checking "Force multicore." Note that you may occasionally experience odd crashes as a result of this.
+
+### Ping does not work
+
+Note that due to libslirp limitations, `ping` will not work and so Windows may think that there is still no internet connection.
+
+### Networking does not work
+
+Make sure you installed the SPICE guest tools, which includes the network drivers.
+
+If Windows 11 setup is stuck due to lack of network connection:
+
+1. Go to the language select screen (you may need to restart the setup if you are past this screen).
+2. Press **Shift + F10** to launch Command Prompt.
+3. Type in `OOBE\BYPASSNRO` and press Enter.
+4. Your VM should reboot and at the setup screen you should see an option for "I don't have internet."
+5. Once Windows setup is completed, make sure to install the SPICE guest tools for network drivers.
+
+On newer versions Microsoft has started blocking `OOBE\BYPASSNRO` so instead you need to launch Command Prompt (**Shift + F10**) and type in `start ms-cxh:localonly`. Afterwards, you can create a local account and continue setup.
+
+### SPICE tools did not install automatically
+
+See [this page](../guest-support/windows.md#windows-xp-and-higher) for more details.
+
+### Windows installer loads and then goes into a black screen
+
+Windows 11 24H2 has a compatibility issue with the graphics drivers that are provided by the UTM Pro guest tools ISO. You can eject the guest ISO from the CD menu and reboot to access Windows installer. After the installation is complete, you can re-mount the guest tools from the CD menu and selecting "Install Windows Guest Tools". After you install the guest tools, you may see a black screen again. If this happens, you should reset the VM to allow the drivers to properly load at boot.

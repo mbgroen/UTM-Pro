@@ -85,7 +85,7 @@ fileprivate struct FirstRow: View {
             data.newVM()
         }
         TileButton(Label(String.browse, systemImage: "arrow.down.circle")) {
-            openURL(URL(string: "https://mac.getutm.app/gallery/")!)
+            openURL(ProductLink.gallery)
         }
     }
 }
@@ -95,13 +95,13 @@ fileprivate struct SecondRow: View {
 
     var body: some View {
         TileButton(Label(String.guide, systemImage: "book.circle")) {
-            openURL(URL(string: "https://docs.getutm.app/basics/basics/")!)
+            openURL(ProductLink.userGuide)
         }
         // Points at this fork, not upstream: nobody there can help with the
         // remote-host features, and sending people to the wrong tracker wastes
         // their time and the maintainers'.
         TileButton(Label(String.support, systemImage: "exclamationmark.bubble")) {
-            openURL(URL(string: "https://github.com/mbgroen/UTM-Pro/issues")!)
+            openURL(ProductLink.issues)
         }
     }
 }
