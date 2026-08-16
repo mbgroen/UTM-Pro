@@ -65,6 +65,22 @@ struct VMDetailsView: View {
                             .padding([.leading, .trailing])
                     }.padding([.leading, .trailing])
                     #if os(macOS)
+                    #if WITH_REMOTE_KVM
+                    // Checked before the QEMU branch, which a remote VM would
+                    // otherwise match: its removable-drive controls act on
+                    // local files. These actions were reachable only by
+                    // right-clicking the VM, which is not where anyone looks.
+                    if #available(macOS 13, *), let libvirtVM = vm.wrapped as? UTMLibvirtVirtualMachine {
+                        VMLibvirtActionsView(vm: vm, libvirtVM: libvirtVM)
+                            .padding([.leading, .trailing, .bottom])
+                    } else if let appleVM = vm.wrapped as? UTMAppleVirtualMachine {
+                        VMAppleRemovableDrivesView(vm: vm, config: appleVM.config, registryEntry: appleVM.registryEntry)
+                            .padding([.leading, .trailing, .bottom])
+                    } else if let qemuVM = vm.wrapped as? UTMQemuVirtualMachine {
+                        VMRemovableDrivesView(vm: vm, config: qemuVM.config)
+                            .padding([.leading, .trailing, .bottom])
+                    }
+                    #else
                     if let appleVM = vm.wrapped as? UTMAppleVirtualMachine {
                         VMAppleRemovableDrivesView(vm: vm, config: appleVM.config, registryEntry: appleVM.registryEntry)
                             .padding([.leading, .trailing, .bottom])
@@ -72,6 +88,7 @@ struct VMDetailsView: View {
                         VMRemovableDrivesView(vm: vm, config: qemuVM.config)
                             .padding([.leading, .trailing, .bottom])
                     }
+                    #endif
                     #else
                     let qemuConfig = vm.config as! UTMQemuConfiguration
                     VMRemovableDrivesView(vm: vm, config: qemuConfig)

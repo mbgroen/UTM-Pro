@@ -55,7 +55,7 @@ struct SettingsView: View {
             case .file:
                 return "File"
             case .server:
-                return "Server"
+                return "Sharing"
             }
         }
 

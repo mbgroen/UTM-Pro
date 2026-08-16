@@ -375,17 +375,20 @@ extension VMData {
     
     /// Display VM target system for UI elements
     var detailsSystemTargetLabel: String {
+        #if WITH_REMOTE_KVM
+        // Checked first: a remote VM carries a QEMU configuration too, so the
+        // branch below would otherwise claim it and print the emulated machine
+        // type — the same long string for every VM on the host.
+        if let libvirtVM = wrapped as? UTMLibvirtVirtualMachine {
+            return libvirtVM.remoteSummaryLabel
+        }
+        #endif
         if let qemuConfig = config as? UTMQemuConfiguration {
             return qemuConfig.system.target.prettyValue
         }
         #if os(macOS)
         if let appleConfig = config as? UTMAppleConfiguration {
             return appleConfig.system.boot.operatingSystem.rawValue
-        }
-        #endif
-        #if WITH_REMOTE_KVM
-        if let libvirtVM = wrapped as? UTMLibvirtVirtualMachine {
-            return libvirtVM.domainInfo.machine ?? libvirtVM.domainInfo.architecture ?? unavailable
         }
         #endif
         return unavailable

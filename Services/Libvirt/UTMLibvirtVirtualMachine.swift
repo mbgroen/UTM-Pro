@@ -59,6 +59,23 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
 
     var domainName: String { domainInfo.domainName }
 
+    /// One compact line of facts for the sidebar.
+    ///
+    /// The machine type is the same long string on every VM of a host, so it
+    /// fills the list without distinguishing anything. What tells VMs apart is
+    /// their size and what they are doing.
+    var remoteSummaryLabel: String {
+        var parts: [String] = []
+        if let architecture = domainInfo.architecture {
+            parts.append(architecture)
+        }
+        parts.append(String(format: NSLocalizedString("%d CPU", comment: "UTMLibvirtVirtualMachine"),
+                            domainInfo.vcpuCount))
+        parts.append(ByteCountFormatter.string(fromByteCount: Int64(config.system.memorySize) * 1024 * 1024,
+                                               countStyle: .binary))
+        return parts.joined(separator: " · ")
+    }
+
     /// The local port a console tunnel is bound to, while one is open.
     private var tunnelPort: Int?
 
@@ -161,7 +178,7 @@ final class UTMLibvirtVirtualMachine: UTMSpiceVirtualMachine {
 
     /// Applies a freshly read domain to this VM.
     func update(from domain: LibvirtDomain) {
-        config.update(projecting: domain)
+        config.update(projecting: domain, previous: domainInfo)
         domainInfo = UTMLibvirtDomainInfo(domain: domain, serverId: server.id)
         snapshotUnsupportedError = domain.supportsInternalSnapshots
             ? nil

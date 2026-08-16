@@ -71,7 +71,7 @@ fileprivate struct VMPlaceholderViewNew: View {
 fileprivate struct Title: View {
     var body: some View {
         HStack {
-            Text("Welcome to UTM").font(.title)
+            Text(String(format: NSLocalizedString("Welcome to %@", comment: "VMPlaceholderView"), productName)).font(.title)
         }
     }
 }
@@ -108,7 +108,7 @@ fileprivate extension String {
     static let browse = NSLocalizedString("Browse UTM Gallery", comment: "Welcome view")
     static let guide = NSLocalizedString("User Guide", comment: "Welcome view")
     static let support = NSLocalizedString("Support", comment: "Welcome view")
-    static let server = NSLocalizedString("Server", comment: "Server view")
+    static let server = NSLocalizedString("Share This Mac\u{2019}s VMs", comment: "Server view")
 }
 
 private struct TileButton: View {

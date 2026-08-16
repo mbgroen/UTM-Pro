@@ -50,9 +50,12 @@ struct VMLibvirtServerSheetModifier: ViewModifier {
                 }
             }
             .task {
-                // Reconnect saved servers on launch so the sidebar is
-                // populated without the user having to ask.
-                await data.libvirtServers.connectAll()
+                // Deliberately does not connect. A saved server is a stored
+                // address and credential, not a standing instruction to log
+                // in — reaching for someone's NAS the moment the app opens is
+                // presumptuous, and on a machine that is asleep or away it
+                // just produces errors. Polling only follows a connection the
+                // user asked for.
                 data.libvirtServers.startPolling()
             }
     }

@@ -181,13 +181,23 @@ extension UTMQemuConfiguration {
         }
     }
 
-    /// Refreshes an existing projection in place, so views observing the
-    /// configuration update rather than being rebuilt.
-    func update(projecting domain: LibvirtDomain) {
+    /// Refreshes the projection from the host, without discarding edits.
+    ///
+    /// - Parameter previous: what the host reported last time. A field is only
+    ///   rewritten when the host's own value changed, so a poll that finds
+    ///   nothing new leaves whatever the user has typed alone. Overwriting
+    ///   unconditionally reverted edits mid-typing, and replacing the arrays
+    ///   invalidated the index bindings a settings form holds — which crashed
+    ///   the app outright while editing a network.
+    func update(projecting domain: LibvirtDomain, previous: UTMLibvirtDomainInfo?) {
         var information = self.information
-        information.name = domain.name
+        if previous == nil || previous?.domainName != domain.name {
+            information.name = domain.name
+        }
         information.uuid = domain.uuid
-        information.notes = domain.notes
+        if previous == nil || previous?.notes != domain.notes {
+            information.notes = domain.notes
+        }
         self.information = information
 
         var system = self.system
@@ -195,18 +205,42 @@ extension UTMQemuConfiguration {
            let mapped = QEMUArchitecture(rawValue: architecture) {
             system.architecture = mapped
         }
-        system.cpuCount = domain.vcpuCount
-        system.memorySize = Int(domain.memoryBytes / (1024 * 1024))
+        let hostVCPUs = domain.vcpuCount
+        let hostMib = Int(domain.memoryBytes / (1024 * 1024))
+        if previous == nil || previous?.vcpuCount != hostVCPUs {
+            system.cpuCount = hostVCPUs
+        }
+        if previous == nil || previous?.memorySizeMib != hostMib {
+            system.memorySize = hostMib
+        }
         self.system = system
 
-        self.networks = domain.interfaces.map { interface in
-            var network = UTMQemuConfigurationNetwork()
-            network.mode = .bridged
-            network.bridgeInterface = interface.source
-            if let mac = interface.macAddress {
-                network.macAddress = mac
+        // Rebuilt only when the host's own interface list changed. Replacing
+        // it on every poll is what invalidated the bindings.
+        let hostSources = domain.interfaces.map(\.source)
+        if previous == nil || previous?.interfaceSources != hostSources {
+            self.networks = domain.interfaces.map { interface in
+                var network = UTMQemuConfigurationNetwork()
+                network.mode = .bridged
+                network.bridgeInterface = interface.source
+                if let mac = interface.macAddress {
+                    network.macAddress = mac
+                }
+                return network
             }
-            return network
+        }
+
+        let hostTargets = domain.disks.map(\.target)
+        if previous == nil || previous?.diskTargets != hostTargets {
+            self.drives = domain.disks.map { disk in
+                var drive = UTMQemuConfigurationDrive()
+                drive.imageName = disk.sourcePath.map { ($0 as NSString).lastPathComponent }
+                drive.isExternal = disk.isCDROM
+                drive.isReadOnly = disk.isReadOnly
+                drive.imageType = disk.isCDROM ? .cd : .disk
+                drive.interface = Self.driveInterface(forBus: disk.bus)
+                return drive
+            }
         }
     }
 }

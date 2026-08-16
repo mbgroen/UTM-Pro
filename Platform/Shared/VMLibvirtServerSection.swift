@@ -64,7 +64,23 @@ struct VMLibvirtServerSection: View {
     @Binding var presentation: VMLibvirtServerPresentation?
 
     var body: some View {
-        Section(header: header) {
+        // Collapsible where the system supports it. A host with a dozen VMs
+        // otherwise fills the whole sidebar and buries the local ones.
+        if #available(macOS 14, iOS 17, *) {
+            Section(isExpanded: $isExpanded) {
+                content
+            } header: {
+                header
+            }
+        } else {
+            Section(header: header) {
+                content
+            }
+        }
+    }
+
+    @ViewBuilder private var content: some View {
+        Group {
             switch server.connectionState {
             case .connected:
                 if server.virtualMachines.isEmpty {
